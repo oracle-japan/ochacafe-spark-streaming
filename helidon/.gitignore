@@ -1,0 +1,14 @@
+.idea
+.vscode
+.project
+.gradle
+.settings
+.classpath
+.metals
+*.iml
+
+project
+target
+model
+Dockerfile
+

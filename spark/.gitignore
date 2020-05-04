@@ -1,0 +1,14 @@
+.idea
+.vscode
+.project
+.gradle
+.settings
+.bloop
+.metals
+*.iml
+
+project
+target
+model
+/*.sh
+

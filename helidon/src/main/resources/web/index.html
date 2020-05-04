@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>dc-front</title>
+<link type="text/css" rel="stylesheet" href="css/style.css">
+<link type="text/css" rel="stylesheet" href="css/additional.css">
+
+<link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap/dist/css/bootstrap.min.css">
+<link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css">
+
+<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
+<link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css">
+
+<link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/theme/default.css">
+</head>
+
+  <body>
+    <div id="app">
+
+      <!-- 温度の一覧 -->
+      <b-card title="温度センサー" header-tag="header" footer-tag="footer" style="position: fixed; margin: 2rem;">
+        <b-card-group deck>
+          <b-card :bg-variant="rackStateList[0]" text-variant="white" header="Rack-01" class="text-center">
+            <b-card-text>{{ rackTempList[0] }}℃</b-card-text>
+          </b-card>
+          <b-card :bg-variant="rackStateList[1]" text-variant="white" header="Rack-02" class="text-center">
+            <b-card-text>{{ rackTempList[1] }}℃</b-card-text>
+          </b-card>
+          <b-card :bg-variant="rackStateList[2]" text-variant="white" header="Rack-03" class="text-center">
+            <b-card-text>{{ rackTempList[2] }}℃</b-card-text>
+          </b-card>
+          <b-card :bg-variant="rackStateList[3]" text-variant="white" header="Rack-04" class="text-center">
+            <b-card-text>{{ rackTempList[3] }}℃</b-card-text>
+          </b-card>
+        </b-card-group>
+      </b-card>
+
+      <!-- 床 -->
+      <div class="isometric-container">
+        <div class="isometric">
+          <div class="plane">
+            <img src="img/froor-texture.jpg" height="762" width="762">
+          </div>
+        </div>
+      </div>
+      
+      <!-- ラック1 -->
+      <div class="isometric-container">
+        <div class="isometric">
+          <div class="cube1" id="popover-target-cube-1">
+            <div class="rack1"></div>
+            <div class="rack1">
+              <img src="img/exa-front.jpg">
+            </div>
+            <div class="rack1"></div>
+            <div class="rack1"></div>
+            <div class="rack1"></div>
+            <div class="rack1"></div>
+          </div>
+        </div>  
+        <b-popover 
+          target="popover-target-cube-1" 
+          triggers="click" 
+          placement="left" 
+          :show.sync="rackPopoverShowList[0]"
+          @hidden="syncTemperatureToModifying(0)"
+        >
+          <template v-slot:title>ラックの温度</template>
+          <div style="text-align: center">
+            <vue-slider
+              ref="slider"
+              direction="btt"
+              :height="200"
+              style="display: inline-block; margin: 10px;"
+              v-model="rackTempListForModifying[0]"
+              :max="200"
+            ></vue-slider>
+          </div>
+          <hr>
+          <div style="text-align: center">
+            <b-button @click="send(0)" size="sm" variant="info">Send</b-button>
+          </div>
+        </b-popover>
+      </div>
+
+      <!-- ラック2 -->
+      <div class="isometric-container">
+        <div class="isometric">
+          <div class="cube2" id="popover-target-cube-2">
+            <div class="rack2"></div>
+            <div class="rack2">
+              <img src="img/exa-front.jpg">
+            </div>
+            <div class="rack2"></div>
+            <div class="rack2"></div>
+            <div class="rack2"></div>
+            <div class="rack2"></div>
+          </div>
+        </div>  
+        <b-popover 
+          target="popover-target-cube-2" 
+          triggers="click" 
+          placement="left" 
+          :show.sync="rackPopoverShowList[1]"
+          @hidden="syncTemperatureToModifying(1)"
+        >
+          <template v-slot:title>ラックの温度</template>
+          <div style="text-align: center">
+            <vue-slider
+              ref="slider"
+              direction="btt"
+              :height="200"
+              style="display: inline-block; margin: 10px;"
+              v-model="rackTempListForModifying[1]"
+              :max="200"
+            ></vue-slider>
+          </div>
+          <hr>
+          <div style="text-align: center">
+            <b-button @click="send(1)" size="sm" variant="info">Send</b-button>
+          </div>
+        </b-popover>
+      </div>
+
+      <!-- ラック3 -->
+      <div class="isometric-container">
+        <div class="isometric">
+          <div class="cube3" id="popover-target-cube-3">
+            <div class="rack3"></div>
+            <div class="rack3">
+              <img src="img/exa-front.jpg">
+            </div>
+            <div class="rack3"></div>
+            <div class="rack3"></div>
+            <div class="rack3"></div>
+            <div class="rack3"></div>
+          </div>
+        </div>  
+        <b-popover 
+          target="popover-target-cube-3" 
+          triggers="click" 
+          placement="left" 
+          :show.sync="rackPopoverShowList[2]"
+          @hidden="syncTemperatureToModifying(2)"
+        >
+          <template v-slot:title>ラックの温度</template>
+          <div style="text-align: center">
+            <vue-slider
+              ref="slider"
+              direction="btt"
+              :height="200"
+              style="display: inline-block; margin: 10px;"
+              v-model="rackTempListForModifying[2]"
+              :max="200"
+            ></vue-slider>
+          </div>
+          <hr>
+          <div style="text-align: center">
+            <b-button @click="send(2)" size="sm" variant="info">Send</b-button>
+          </div>
+        </b-popover>
+      </div>
+
+      <!-- ラック4 -->
+      <div class="isometric-container">
+        <div class="isometric">
+          <div class="cube4" id="popover-target-cube-4">
+            <div class="rack4"></div>
+            <div class="rack4">
+              <img src="img/exa-front.jpg">
+            </div>
+            <div class="rack4"></div>
+            <div class="rack4"></div>
+            <div class="rack4"></div>
+            <div class="rack4"></div>
+          </div>
+        </div>  
+        <b-popover 
+          target="popover-target-cube-4" 
+          triggers="click" 
+          placement="left" 
+          :show.sync="rackPopoverShowList[3]"
+          @hidden="syncTemperatureToModifying(3)"
+        >
+          <template v-slot:title>ラックの温度</template>
+          <div style="text-align: center">
+            <vue-slider
+              ref="slider"
+              direction="btt"
+              :height="200"
+              style="display: inline-block; margin: 10px;"
+              v-model="rackTempListForModifying[3]"
+              :max="200"
+            ></vue-slider>
+          </div>
+          <hr>
+          <div style="text-align: center">
+            <b-button @click="send(3)" size="sm" variant="info">Send</b-button>
+          </div>
+        </b-popover>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/dist/vue-slider-component.umd.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>  
+    <script>
+
+      const VueSlider  = window[ 'vue-slider-component' ];
+      
+      var app = new Vue({
+        el: '#app',
+        components: {
+          'vueSlider': VueSlider,
+        },
+
+        data: {
+          rackIdList: ["rack-01", "rack-02", "rack-03", "rack-04"],
+          rackTempList: [40, 40, 40, 40],//正となる温度の配列
+          rackTempListForModifying: [40, 40, 40, 40],//編集用の温度の配列
+          rackStateList: ["info", "info", "info", "info"],
+          rackPopoverShowList: [false, false, false, false],
+        },
+
+        methods: {
+
+          send(rackIndex) {
+            
+            this.syncTemperatureToActual(rackIndex);
+
+            const rackId = this.rackIdList[rackIndex];
+            const temperature = this.rackTempList[rackIndex];
+
+            this.calculateRackState(rackIndex, temperature)
+            this.postBackend(rackId, temperature);
+            this.closePopover(rackIndex);
+
+          },
+
+          // 温度一覧カードの色を算出
+          calculateRackState(rackIndex, temperature) {
+            let state = "info";
+            if (temperature >= 100) {
+              state = "danger";
+            } else if (temperature >= 80) {
+              state = "warning";
+            } else if (temperature < 40) {
+              state = "primary";
+            }
+            this.rackStateList.splice(rackIndex, 1, state);
+          },
+
+          // POST実行
+          postBackend(rackId, temperature) {
+            axios
+              .post(location.protocol + "//" + location.host + "/tempmon",{
+                rackId: rackId,
+                temperature: temperature,
+              })
+              .then(response => {
+                //do nothing
+              })
+              .catch(error => console.log(error));
+          },
+
+          closePopover(rackIndex) {
+            this.rackPopoverShowList.splice(rackIndex, 1, false);
+          },
+
+          // 配列の同期(バックエンドの状態と同じ、正となる温度配列 => 編集用の温度配列)
+          syncTemperatureToModifying(rackIndex) {
+            this.rackTempListForModifying.splice(rackIndex, 1, this.rackTempList[rackIndex]);
+          },
+
+          // 配列の同期(編集用の温度配列 => バックエンドの状態と同じ、正となる温度配列)
+          syncTemperatureToActual(rackIndex) {
+            this.rackTempList.splice(rackIndex, 1, this.rackTempListForModifying[rackIndex]);
+          },
+          
+        },
+      })
+    </script>
+  </body>
+</html>
