@@ -4,13 +4,12 @@ import java.sql.Timestamp
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.{DataStreamReader, DataStreamWriter, GroupState, StreamingQuery, Trigger}
-import java.util.concurrent.atomic.AtomicInteger
+import org.apache.spark.sql.streaming.{DataStreamWriter, GroupState}
 
 import scala.reflect.io.Directory
 import java.io.File
 
-import io.helidon.config.Config;
+import io.helidon.config.Config
 
 /**
  * Arbitrary Stateful Processing を使った温度センサー異常検知シナリオ
@@ -21,35 +20,29 @@ object TemperatureMonitorKafkaASP {
   case class RackState(var rackId:String, var status:String, var prevStatus:String, var eventTS:Timestamp, var ts:Timestamp, var temperature:Double)
 
   val config: Config = Config.create()
-  val temperatureThreshould = config.get("config.threshould-temp").asDouble().orElse(100.0)
-  val warningThreshold = config.get("config.threshould-warning").asLong().orElse(30 * 1000L)
-  val normalThreshould = config.get("config.threshould-normal").asLong().orElse(30 * 1000L)
+  val temperatureThreshold: Double = config.get("config.threshold-temp").asDouble().orElse(100.0)
+  val warningThreshold: Long = config.get("config.threshold-warning").asLong().orElse(30 * 1000L)
+  val normalThreshold: Long = config.get("config.threshold-normal").asLong().orElse(30 * 1000L)
 
   /**
    * 受信データが一定時間（warningThreshold/normalThreshould）閾値(temperatureThreshould)を
    * 越えているか/下回っているかをチェックする
    */
   def updateRackState(rackState : RackState, rackInfo : RackInfo) : RackState = {
-    println("== updateRackState ==")
-    println("Last state: " + rackState)
-    println("Current rack info: " + rackInfo)
-
+    println(rackInfo)
+    val oldState = rackState.copy()
     var firstTS = rackState.eventTS
 
-    val isGreaterThanEqualToThreshould = rackInfo.temperature >= temperatureThreshould // boolean
-    println(s"isGreaterThanEqualToThreshould: $isGreaterThanEqualToThreshould")
-
-    val prev = Option(rackState.status).getOrElse(if(isGreaterThanEqualToThreshould) "Warining" else "Normal")
-
+    val isGreaterThanEqualToThreshold = rackInfo.temperature >= temperatureThreshold // boolean
+    val prev = Option(rackState.status).getOrElse(if(isGreaterThanEqualToThreshold) "Warning" else "Normal")
     val isInNormalStatus = (prev == "Normal")
-    println(s"isInNormalStatus: $isInNormalStatus")
-
     val duration = rackInfo.timestamp.getTime - Option(firstTS).getOrElse(rackInfo.timestamp).getTime
-    println(s"duration: $duration")
 
-    (isGreaterThanEqualToThreshould, isInNormalStatus) match {
-      case (true, true) => { // >=temperatureThreshould and Normal status
-        if(firstTS == null){
+    println(s""" = ${if(isGreaterThanEqualToThreshold) "Above" else "Below"} $temperatureThreshold for $duration msec since changed.""")
+
+    (isGreaterThanEqualToThreshold, isInNormalStatus) match {
+      case (true, true) => { // >=temperatureThreshold and Normal status
+        if(Option(firstTS).isEmpty){
           rackState.eventTS = rackInfo.timestamp
           rackState.status = prev
         }else{
@@ -59,12 +52,12 @@ object TemperatureMonitorKafkaASP {
           }
         }
       }
-      case (false, false) => { // < temperatureThreshould and Warning status
-        if(firstTS == null){
+      case (false, false) => { // < temperatureThreshold and Warning status
+        if(Option(firstTS).isEmpty){
           rackState.eventTS = rackInfo.timestamp
           rackState.status = prev
         }else{
-          if(duration >= normalThreshould){
+          if(duration >= normalThreshold){
             rackState.eventTS = null
             rackState.status = "Normal"
           }
@@ -79,7 +72,8 @@ object TemperatureMonitorKafkaASP {
     rackState.prevStatus = prev
     rackState.ts = rackInfo.timestamp
     rackState.temperature = rackInfo.temperature
-    println("Updated state: " + rackState)
+    printStates(oldState, rackState)
+
     if(rackState.status != rackState.prevStatus){
       println("!!!!! Status has changed !!!!!")
     }
@@ -90,7 +84,7 @@ object TemperatureMonitorKafkaASP {
   def updateAcrossAllRackStatus(rackId : String, inputs : Iterator[RackInfo], oldState : GroupState[RackState]) : RackState = {
     println(s"[$rackId] >> updateAcrossAllRackStatus")
 
-    var rackState = if (oldState.exists) oldState.get else RackState(rackId, null, null, null, null, 0)
+    var rackState = if (oldState.exists) oldState.get else RackState(rackId, null, null, null, null, 0.0)
 
     inputs.toList.sortBy(_.timestamp.getTime).foreach( input => {
       rackState = updateRackState(rackState, input)
@@ -106,20 +100,14 @@ object TemperatureMonitorKafkaASP {
       .appName("TemperatureMonitor_ArbitraryStatefulProcessing")
       .getOrCreate()
 
-    sys.ShutdownHookThread {
-      val sc = spark.sparkContext
-      if(!sc.isStopped) sc.stop()
-      Thread.sleep(3000L)
-    }
-
     import org.apache.spark.sql.streaming.GroupStateTimeout
     import org.apache.spark.sql.types._
     import spark.implicits._
 
     val monitorDataSchema = new StructType()
-      .add("rackId", StringType, false)
-      .add("temperature", DoubleType, false)
-      .add("timestamp", TimestampType, false)
+      .add(name = "rackId", dataType = StringType, nullable = false)
+      .add(name = "temperature", dataType = DoubleType, nullable = false)
+      .add(name = "timestamp", dataType = TimestampType, nullable = false)
 
     val df = subscribe(spark)
       .selectExpr("CAST(value AS STRING)").as("value")
@@ -135,6 +123,21 @@ object TemperatureMonitorKafkaASP {
     sq.awaitTermination()
     spark.close()
   }
+
+  def printStates(oldState: RackState, newState: RackState): Unit = {
+    println("+-----+--------+-----+--------+--------+---------------------+---------------------+")
+    println("|     |Rack ID |Temp.|Current |Previous|TS of Initial Event  |TS of Last Event     |")
+    println("+-----+--------+-----+--------+--------+---------------------+---------------------+")
+    println(formatState("Last", oldState))
+    println(formatState("New", newState))
+    println("+-----+--------+-----+--------+--------+---------------------+---------------------+")
+  }
+
+  def formatState(state: String, rackState: RackState): String = {
+    "|%-5s|%-8s|%5.1f|%-8s|%-8s|%21s|%21s|"
+      .format(state, rackState.rackId, rackState.temperature, rackState.status, rackState.prevStatus, rackState.eventTS, rackState.ts)
+  }
+
 
   val loginModule = "org.apache.kafka.common.security.plain.PlainLoginModule"
 

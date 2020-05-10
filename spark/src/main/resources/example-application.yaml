@@ -1,9 +1,9 @@
 
 config:
-#  threshould-temp: 100.0
-#  threshould-warning: 30000
-#  threshould-normal: 30000
-#  threshould-watermark: "30 seconds"
+#  threshold-temp: 100.0
+#  threshold-warning: 30000
+#  threshold-normal: 30000
+#  threshold-watermark: "30 seconds"
 #  duration-window: "30 seconds"
 #  duration-slide: "6 seconds"
 sw:

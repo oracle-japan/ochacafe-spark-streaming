@@ -2,13 +2,12 @@ package com.oracle.demo
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.{DataStreamReader, DataStreamWriter, GroupState, StreamingQuery, Trigger}
-import java.util.concurrent.atomic.AtomicInteger
+import org.apache.spark.sql.streaming.DataStreamWriter
 
 import scala.reflect.io.Directory
 import java.io.File
 
-import io.helidon.config.Config;
+import io.helidon.config.Config
 
 /**
  * Sliding Window を使った温度センサー異常検知シナリオ
@@ -19,24 +18,24 @@ object TemperatureMonitorKafkaSW {
   case class RackState(var rackId:String, var highTempCount:Int, var status:String, var prevStatus:String, var lastTS:java.sql.Timestamp)
 
   val config: Config = Config.create()
-  var temperatureThreshould = config.get("config.threshould-temp").asDouble().orElse(100.0)
-  var watermarkDelayThreshould = config.get("config.threshould-watermark").asString().orElse("0 seconds") 
-  var windowDuration = config.get("config.duration-window").asString().orElse("30 seconds")
-  var windowSlideDuration = config.get("config.duration-slide").asString().orElse("5 seconds")
-  var outputMode = config.get("sw.output-mode").asString().orElse("update")
+  var temperatureThreshold: Double = config.get("config.threshold-temp").asDouble().orElse(100.0)
+  var watermarkDelayThreshold: String = config.get("config.threshold-watermark").asString().orElse("0 seconds")
+  var windowDuration: String = config.get("config.duration-window").asString().orElse("30 seconds")
+  var windowSlideDuration: String = config.get("config.duration-slide").asString().orElse("5 seconds")
+  var outputMode: String = config.get("sw.output-mode").asString().orElse("update")
 
   // データが一定間隔で到着する仮定の下で、Windowあたりのデータの最大個数
   // updateモードの場合、未確定のWindowが出力されるので、これでフィルタをかける
   // 30秒のWindowで5秒おきにデータが到着する場合 6 となる
-  var eventsPerWindow = config.get("config.events-per-window").asInt().orElse(6)
+  var eventsPerWindow: Int = config.get("config.events-per-window").asInt().orElse(6)
 
   def main(args: Array[String]) {
 
     parseArgs(args)
-    println(s"Output mode: ${outputMode}")
-    println(s"Watermark delay: ${watermarkDelayThreshould}")
-    println(s"Window duration: ${windowDuration}")
-    println(s"Window slide duration: ${windowSlideDuration}")
+    println(s"Output mode: $outputMode")
+    println(s"Watermark delay: $watermarkDelayThreshold")
+    println(s"Window duration: $windowDuration")
+    println(s"Window slide duration: $windowSlideDuration")
 
     val spark = SparkSession
       .builder()
@@ -47,9 +46,9 @@ object TemperatureMonitorKafkaSW {
     import spark.implicits._
 
     val monitorDataSchema = new StructType()
-      .add("rackId", StringType, false)
-      .add("temperature", DoubleType, false)
-      .add("timestamp", TimestampType, false)
+      .add(name = "rackId", dataType = StringType, nullable = false)
+      .add(name = "temperature", dataType = DoubleType, nullable = false)
+      .add(name = "timestamp", dataType = TimestampType, nullable = false)
 
     // ステートの判定を行うユーザー定義関数
     val checkState = udf((max: Double, min: Double, count: Int) => {
@@ -62,8 +61,8 @@ object TemperatureMonitorKafkaSW {
         // 到着する前提なのでこの条件は無視する
         state = "Void"
       }else{
-        if(min >= temperatureThreshould) state = "Warning"
-        else if(max < temperatureThreshould) state = "Normal"
+        if(min >= temperatureThreshold) state = "Warning"
+        else if(max < temperatureThreshold) state = "Normal"
       }
       state
     })
@@ -72,7 +71,7 @@ object TemperatureMonitorKafkaSW {
       .selectExpr("CAST(value AS STRING)")
       .select(from_json($"value", monitorDataSchema).as("rackInfo"))
       .select($"rackInfo.rackId".as("rackId"), $"rackInfo.temperature".as("temperature"), $"rackInfo.timestamp".as("timestamp"))
-      .withWatermark("timestamp", watermarkDelayThreshould) // necessary when append mode
+      .withWatermark("timestamp", watermarkDelayThreshold) // necessary when append mode
       .groupBy($"rackId", window($"timestamp", windowDuration, windowSlideDuration))
       .agg(
         max("temperature").as("maxTemp"),
@@ -88,7 +87,7 @@ object TemperatureMonitorKafkaSW {
       .outputMode(outputMode)
       .start()
 
-    // write to console for demo use
+    // write to console - デモのために意図的にコンソール出力を追加している
     val sq2 = df 
       .select($"rackId", $"window.start".as("start"), $"window.end".as("end"), $"status", $"maxTemp".as("max"), $"minTemp".as("min"), $"count")
       .writeStream
@@ -161,11 +160,11 @@ object TemperatureMonitorKafkaSW {
       while(i < args.length) {
           if(args(i) == "--output-mode"){
               i = i + 1
-              outputMode = args(i);
+              outputMode = args(i)
           }
           if(args(i) == "--watermark"){
               i = i + 1
-              watermarkDelayThreshould = args(i) + " seconds";
+              watermarkDelayThreshold = args(i) + " seconds"
           }
           i = i + 1
       }
