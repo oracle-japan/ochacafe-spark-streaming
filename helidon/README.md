@@ -18,14 +18,17 @@ src/main/resources/example-application.yaml を application.yaml にリネーム
 
 ## 起動
 
-通常は、シェルを使って、TempReporter, SlackReporter を別JVMで起動した方が標準出力が見やすい
-
-```
-./start-alerter.sh
-```
+通常は、シェルを使って、TempReporter, SlackAlerter を別JVMで起動した方が標準出力が見やすい
 
 ```
 ./start-reporter.sh
+```
+
+Web/RESTサーバーは TempReporter と一緒に立ち上がります。ポート 8080 でリクエストを受け付けます。  
+ブラウザからルートにアクセスするとシミュレーションのページが表示されます。
+
+```
+./start-alerter.sh
 ```
 
 1 JVMで起動することももちろん可能
