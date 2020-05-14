@@ -1,6 +1,7 @@
 package com.oracle.demo
 
 import java.sql.Timestamp
+import java.util.Date
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions._
@@ -23,6 +24,7 @@ object TemperatureMonitorKafkaASP {
   val temperatureThreshold: Double = config.get("config.threshold-temp").asDouble().orElse(100.0)
   val warningThreshold: Long = config.get("config.threshold-warning").asLong().orElse(30 * 1000L)
   val normalThreshold: Long = config.get("config.threshold-normal").asLong().orElse(30 * 1000L)
+  var timeout: String = config.get("config.timeout").asString().orElse("30 seconds")
 
   /**
    * 受信データが一定時間（warningThreshold/normalThreshould）閾値(temperatureThreshould)を
@@ -84,16 +86,31 @@ object TemperatureMonitorKafkaASP {
   def updateAcrossAllRackStatus(rackId : String, inputs : Iterator[RackInfo], oldState : GroupState[RackState]) : RackState = {
     println(s"[$rackId] >> updateAcrossAllRackStatus")
 
-    var rackState = if (oldState.exists) oldState.get else RackState(rackId, null, null, null, null, 0.0)
+    if(oldState.exists && oldState.hasTimedOut){
+      println(s"!! TIMEOUT !! - oldState: $oldState\n")
+      val state = RackState(rackId, "Timeout", oldState.get.status, null, new Timestamp(new Date().getTime()), 0.0)
+      oldState.update(state)
+      return state
+    }
+
+    var rackState = RackState(rackId, null, null, null, null, 0.0)
+    if(oldState.exists){
+      val state = oldState.get
+      if(state.status != "Timeout") rackState = state
+    }
 
     inputs.toList.sortBy(_.timestamp.getTime).foreach( input => {
       rackState = updateRackState(rackState, input)
       oldState.update(rackState)
+      oldState.setTimeoutDuration(timeout)
     })
     rackState
   }
 
   def main(args: Array[String]) {
+
+    parseArgs(args)
+    println(s"Timeout: $timeout")
 
     val spark = SparkSession
       .builder()
@@ -114,7 +131,7 @@ object TemperatureMonitorKafkaASP {
       .select(from_json($"value", monitorDataSchema).as("rackInfo"))
       .select($"rackInfo.rackId".as("rackId"), $"rackInfo.temperature".as("temperature"), $"rackInfo.timestamp".as("timestamp"))
       .as[RackInfo]
-      .groupByKey(_.rackId).mapGroupsWithState[RackState, RackState](GroupStateTimeout.NoTimeout)(updateAcrossAllRackStatus)
+      .groupByKey(_.rackId).mapGroupsWithState[RackState, RackState](GroupStateTimeout.ProcessingTimeTimeout)(updateAcrossAllRackStatus)
       .where($"status" =!= $"prevStatus")
       .select(lit("ASP").as("key"), to_json(struct($"rackId", $"status", $"ts", $"temperature")).as("value"))
 
@@ -192,5 +209,17 @@ object TemperatureMonitorKafkaASP {
       .option("checkpointLocation", pubCheckpointLocation)
       .outputMode("update") //  must be "update" in case of ASP
   }
+
+  def parseArgs(args: Array[String]): Unit = {
+      var i = 0
+      while(i < args.length) {
+          if(args(i) == "--timeout"){
+              i = i + 1
+              timeout = args(i) + " seconds"
+          }
+          i = i + 1
+      }
+  }
+
 }
 
