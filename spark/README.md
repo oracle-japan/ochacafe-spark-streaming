@@ -3,10 +3,11 @@
 ラックの個々の温度を監視し、一定時間閾値を越えた/下回った場合にSlackに対してアラートを発出します。
 2種類の方法で実装してみました。  
 
-| ファイル                          | 説明                                          | 
-|----------------------------------|-----------------------------------------------|
-| TemperatureMonitorKafkaSW.scala  | Sliding Window 方式による実装                  |
-| TemperatureMonitorKafkaASP.scala | Arbitrary Stateful Processing 方式による実装   |
+| ファイル                           | 説明                                                                | 
+|-----------------------------------|---------------------------------------------------------------------|
+| TemperatureMonitorKafkaSW.scala   | Sliding Window 方式による実装                                        |
+| TemperatureMonitorKafkaASP.scala  | Arbitrary Stateful Processing 方式による実装(mapGroupsWithState)     |
+| TemperatureMonitorKafkaASP2.scala | Arbitrary Stateful Processing 方式による実装(flatMapGroupsWithState) |
 
 ## Sliding Window 方式による実装
 
@@ -38,7 +39,21 @@
 ## Arbitrary Stateful Processing 方式による実装
 
 新たな温度データが到達したタイミングで都度ステータスの計算を行います。任意の処理が可能で、さらに過去の情報を引き継ぐ仕組みも持っているので、ステータスの変化を自ら特定することができます。  
-設定したタイムアウト値以内に新たなデータが到達しないとステータスは"Timeout"となり、判定処理がリセットされます。
+設定したタイムアウト値以内に新たなデータが到達しないとステータスは"Timeout"となり、判定処理がリセットされます。  
+mapGroupsWithState での実装は必ず1行出力するので、出力した結果にwhereをかけてAlertするものだけにフィルタしています。
+
+```
+.groupByKey(_.rackId).mapGroupsWithState[RackState, RackState](GroupStateTimeout.ProcessingTimeTimeout)(updateAcrossAllRackStatus)
+.where($"status" =!= $"prevStatus") // 直前のステータスが異なるものだけにフィルタ
+.select(lit("ASP").as("key"), to_json(struct($"rackId", $"status", $"ts", $"temperature")).as("value"))
+```
+
+flatMapGroupsWithState での実装は0行以上の出力が可能なので、Alertするものだけを出力しています。
+
+```
+.groupByKey(_.rackId).flatMapGroupsWithState[RackState, RackState](om, GroupStateTimeout.ProcessingTimeTimeout)(updateAcrossAllRackStatus)
+.select(lit("ASP").as("key"), to_json(struct($"rackId", $"status", $"ts", $"temperature")).as("value"))
+```
 
 ## ビルド
 ```

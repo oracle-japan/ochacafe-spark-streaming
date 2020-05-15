@@ -1,21 +1,21 @@
 package com.oracle.demo
 
+import java.io.File
 import java.sql.Timestamp
 import java.util.Date
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import io.helidon.config.Config
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{DataStreamWriter, GroupState, OutputMode}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.io.Directory
-import java.io.File
-
-import io.helidon.config.Config
 
 /**
- * Arbitrary Stateful Processing を使った温度センサー異常検知シナリオ
+ * Arbitrary Stateful Processing を使った温度センサー異常検知シナリオ その2
  */
-object TemperatureMonitorKafkaASP {
+object TemperatureMonitorKafkaASP2 {
 
   case class RackInfo(rackId:String, temperature:Double, timestamp:Timestamp)
   case class RackState(var rackId:String, var status:String, var prevStatus:String, var eventTS:Timestamp, var ts:Timestamp, var temperature:Double)
@@ -25,6 +25,7 @@ object TemperatureMonitorKafkaASP {
   val warningThreshold: Long = config.get("config.threshold-warning").asLong().orElse(30 * 1000L)
   val normalThreshold: Long = config.get("config.threshold-normal").asLong().orElse(30 * 1000L)
   var timeout: String = config.get("config.timeout").asString().orElse("30 seconds")
+  var outputMode: String = config.get("sw.output-mode").asString().orElse("update")
 
   /**
    * 受信データが一定時間（warningThreshold/normalThreshould）閾値(temperatureThreshould)を
@@ -83,14 +84,17 @@ object TemperatureMonitorKafkaASP {
     rackState
   }
 
-  def updateAcrossAllRackStatus(rackId : String, inputs : Iterator[RackInfo], oldState : GroupState[RackState]) : RackState = {
+  def updateAcrossAllRackStatus(rackId : String, inputs : Iterator[RackInfo], oldState : GroupState[RackState]) : Iterator[RackState] = {
     println(s"[$rackId] >> updateAcrossAllRackStatus")
+
+    var output = ListBuffer[RackState]()
 
     if(oldState.exists && oldState.hasTimedOut){
       println(s"!! TIMEOUT !! - oldState: $oldState\n")
       val state = RackState(rackId, "Timeout", oldState.get.status, null, new Timestamp(new Date().getTime()), 0.0)
       oldState.update(state)
-      return state
+      output += state
+      return output.iterator
     }
 
     var rackState = RackState(rackId, null, null, null, null, 0.0)
@@ -104,14 +108,18 @@ object TemperatureMonitorKafkaASP {
       oldState.update(rackState)
       oldState.setTimeoutDuration(timeout)
     })
-    rackState
+    if(rackState.status != rackState.prevStatus) output += rackState
+    output.iterator
   }
 
   def main(args: Array[String]) {
 
     parseArgs(args)
-    println("** Example of mapGroupsWithState **")
+    println("** Example of flatMapGroupsWithState **")
     println(s"Timeout: $timeout")
+
+    val om: OutputMode = if(outputMode == "append") OutputMode.Append else OutputMode.Update
+    println(s"Output mode: $om")
 
     val spark = SparkSession
       .builder()
@@ -132,8 +140,7 @@ object TemperatureMonitorKafkaASP {
       .select(from_json($"value", monitorDataSchema).as("rackInfo"))
       .select($"rackInfo.rackId".as("rackId"), $"rackInfo.temperature".as("temperature"), $"rackInfo.timestamp".as("timestamp"))
       .as[RackInfo]
-      .groupByKey(_.rackId).mapGroupsWithState[RackState, RackState](GroupStateTimeout.ProcessingTimeTimeout)(updateAcrossAllRackStatus)
-      .where($"status" =!= $"prevStatus")
+      .groupByKey(_.rackId).flatMapGroupsWithState[RackState, RackState](om, GroupStateTimeout.ProcessingTimeTimeout)(updateAcrossAllRackStatus)
       .select(lit("ASP").as("key"), to_json(struct($"rackId", $"status", $"ts", $"temperature")).as("value"))
 
     val sq = publish(df).start()
@@ -208,12 +215,16 @@ object TemperatureMonitorKafkaASP {
       .option("retries", 5)
       .option("topic", pubTopic)
       .option("checkpointLocation", pubCheckpointLocation)
-      .outputMode("update") //  must be "update" in case of ASP
+      .outputMode(outputMode)
   }
 
   def parseArgs(args: Array[String]): Unit = {
       var i = 0
       while(i < args.length) {
+          if(args(i) == "--output-mode"){
+              i = i + 1
+              outputMode = args(i)
+          }
           if(args(i) == "--timeout"){
               i = i + 1
               timeout = args(i) + " seconds"
