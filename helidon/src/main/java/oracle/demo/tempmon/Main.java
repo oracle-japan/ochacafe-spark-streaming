@@ -30,20 +30,14 @@ public final class Main {
         setupLogging();
 
         final Config config = Config.create();
-        final Config tempReporterConfig = config.get("temp-reporter");
-        final Config slackAlerterConfig = config.get("slack-alerter");
 
-        final boolean tempReporterEnabled = tempReporterConfig.get("enabled").asBoolean().orElse(true);
-        final boolean slackAlerterEnabled = slackAlerterConfig.get("enabled").asBoolean().orElse(true);
+        final boolean simulatorEnabled = config.get("simulator.enabled").asBoolean().orElse(true);
+        final boolean tempReporterEnabled = config.get("temp-reporter.enabled").asBoolean().orElse(true);
+        final boolean slackAlerterEnabled = config.get("slack-alerter.enabled").asBoolean().orElse(true);
 
-        // start kafka publisher
+        // start temp reporter
         if(tempReporterEnabled){
             TempReporter.getInstance();
-
-            // start the server
-            final Server server = startServer();
-            logger.info(String.format("Server started - host=%s, port=%d", server.host(), server.port()));
-
         }else{
             logger.warning("TempReporter is disabled.");
         }
@@ -54,6 +48,16 @@ public final class Main {
         }else{
             logger.warning("SlackAlerter is disabled.");
         }
+
+        // simulator
+        if(simulatorEnabled){
+            // start the server
+            final Server server = startServer();
+            logger.info(String.format("Server started - host=%s, port=%d", server.host(), server.port()));
+        }else{
+            logger.warning("Simulator is disabled.");
+        }
+
 
     }
 

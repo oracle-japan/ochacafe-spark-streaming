@@ -17,13 +17,11 @@ public class TempMonitor {
 
     /////
 
-    private final AtomicBoolean pending = new AtomicBoolean(true);
+    private final AtomicBoolean pending = new AtomicBoolean(false);
 
     private final MonitorStore store = MonitorStoreFactory.create();
 
     private TempMonitor() {
-        store.clear();
-        pending.set(false);
     }
 
     public void close(){
