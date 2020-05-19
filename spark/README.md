@@ -66,5 +66,9 @@ src/main/resources/example-application.yaml を application.yaml にリネーム
 通常は、シェルを使って下さい（環境変数 SPARK_HOME が設定されている前提です）。
 
 ```
-./start.sh [SW | ASP] { --output-mode append | update }
+./start.sh [ SW | ASP | ASP2 ] 
+
+option: --output-mode [ append | update ] 
+        --watermark <seconds> 
+        --timeout <seconds>
 ```

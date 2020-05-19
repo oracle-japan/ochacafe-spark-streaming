@@ -123,7 +123,7 @@ object TemperatureMonitorKafkaASP2 {
 
     val spark = SparkSession
       .builder()
-      .appName("TemperatureMonitor_ArbitraryStatefulProcessing")
+      .appName("TemperatureMonitor_ArbitraryStatefulProcessing2")
       .getOrCreate()
 
     import org.apache.spark.sql.streaming.GroupStateTimeout
