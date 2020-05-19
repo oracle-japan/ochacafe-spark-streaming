@@ -2,11 +2,16 @@ package oracle.demo.tempmon;
 
 import java.util.Date;
 import java.util.Optional;
+import java.io.StringReader;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 
 import javax.json.Json;
 import javax.json.JsonBuilderFactory;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.json.bind.annotation.JsonbTransient;
 
 import org.jboss.weld.exceptions.IllegalArgumentException;
 
@@ -53,6 +58,7 @@ public class RackInfo {
         return timestamp;
     }
 
+    @JsonbTransient
     public String getTimestampStr(){
         return iso8601format.format(timestamp);
     }
@@ -77,5 +83,22 @@ public class RackInfo {
             .build()
             .toString();
     }
+
+    public static RackInfo fromJson(String json){
+        //System.out.println("json: " + json);
+        JsonReader jsonReader = Json.createReader(new StringReader(json));
+        JsonObject jobj = jsonReader.readObject();
+        String timestamp = jobj.getString("timestamp");
+        try{
+            return new RackInfo(
+                jobj.getString("rackId"),
+                jobj.getJsonNumber("temperature").doubleValue(),
+                iso8601format.parse(timestamp)
+            );
+        }catch(ParseException e){
+            throw new RuntimeException("Couldn't parse timestamp: " + timestamp);
+        }
+    }
+
 
 }

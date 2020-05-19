@@ -1,16 +1,12 @@
 package oracle.demo.tempmon;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
+
+import oracle.demo.tempmon.store.MonitorStore;
+import oracle.demo.tempmon.store.MonitorStoreFactory;
 
 public class TempMonitor {
-
-    private static final Logger logger = Logger.getLogger(TempMonitor.class.getName());
 
     private static TempMonitor monitor;
 
@@ -21,11 +17,17 @@ public class TempMonitor {
 
     /////
 
-    private final AtomicBoolean pending = new AtomicBoolean(false);
+    private final AtomicBoolean pending = new AtomicBoolean(true);
 
-    private final ConcurrentHashMap<String, RackInfo> racks = new ConcurrentHashMap<>();
+    private final MonitorStore store = MonitorStoreFactory.create();
 
     private TempMonitor() {
+        store.clear();
+        pending.set(false);
+    }
+
+    public void close(){
+        store.close();
     }
 
     public boolean isPending(){
@@ -37,29 +39,20 @@ public class TempMonitor {
     }
 
     public void clear(){
-        racks.clear();
+        store.clear();
     }
 
     public RackInfo[] getAllRackInfo(){
-        final List<RackInfo> rackList = new ArrayList<>();
-        racks.forEachValue(1, (rackInfo) -> rackList.add(copy(rackInfo)));
-        return rackList.toArray(new RackInfo[rackList.size()]);
+        return store.getAllRackInfo();
     }
 
     public RackInfo getRackInfo(String id){
-        return copy(racks.get(id));
+
+        return store.getRackInfo(id);
     }
 
     public RackInfo updateRackInfo(RackInfo rackInfo){
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-            rackInfo.setTimestamp(new Date());
-        }
-        logger.finer("Updating: " + rackInfo);
-        return racks.put(rackInfo.getRackId(), rackInfo);
-    }
-
-    private RackInfo copy(RackInfo rackInfo) {
-        return new RackInfo(rackInfo.getRackId(), rackInfo.getTemperature(), rackInfo.getTimestamp());
+        return store.updateRackInfo(rackInfo.getRackId(), rackInfo);
     }
 
 }

@@ -69,6 +69,7 @@ public class TempReporter {
                     Thread.sleep(pollingInterval);
                 }catch(InterruptedException ie){}
             }
+            monitor.close();
         });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -90,12 +91,12 @@ public class TempReporter {
 
     private void stop(){
         fToGo.set(false);
-        System.err.println("\nWaiting for KafkaPublisher to be terminated...");
+        System.err.println("\nWaiting for TempReporter to be terminated...");
         try {
             es.shutdown();
             es.awaitTermination(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {}
-        System.err.println("KafkaPublisher stopped.");
+        System.err.println("TempReporter stopped.");
     }
 
     private KafkaProducer<String, String> createKafkaProducer(){

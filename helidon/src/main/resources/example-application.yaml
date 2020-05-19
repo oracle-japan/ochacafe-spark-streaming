@@ -27,3 +27,14 @@ slack-alerter:
     auth-token: "${ALIAS=kafka.auth-token}"
     topic: "TOPIC TO SUBSCRIBE"
     group-id: "GROUP_01"
+
+monitor-store: "map" # map or nosql
+
+nosql:
+  compartment-id: "ocid1.compartment.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  region: "us-ashburn-1"
+  table-limits:
+    read: 1
+    write: 1
+    storage: 1
+      
