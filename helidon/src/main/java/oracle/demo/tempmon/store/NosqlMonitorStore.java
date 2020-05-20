@@ -23,7 +23,6 @@ import oracle.nosql.driver.ops.QueryResult;
 import oracle.nosql.driver.ops.TableLimits;
 import oracle.nosql.driver.ops.TableRequest;
 import oracle.nosql.driver.ops.TableResult;
-import oracle.nosql.driver.values.FieldValue;
 import oracle.nosql.driver.values.MapValue;
 
 public class NosqlMonitorStore implements MonitorStore {
@@ -68,6 +67,7 @@ public class NosqlMonitorStore implements MonitorStore {
         final TableRequest request = new TableRequest().setStatement(stmtDrop);
         final TableResult result = handle.doTableRequest(request, 15 * 1000,  3 * 1000);
         logger.info(String.format("[NoSQL] table \"%s\" is %s", result.getTableName(), result.getTableState()));
+        handle.close();
         System.err.println("[NoSQL] closed.");
     }
 
@@ -81,17 +81,16 @@ public class NosqlMonitorStore implements MonitorStore {
     public RackInfo[] getAllRackInfo() {
         final List<RackInfo> rackList = new ArrayList<>();
         final QueryRequest request = new QueryRequest().setStatement(querySelect);
-        final QueryResult queryResult = handle.query(request);
-        final List<MapValue> results = queryResult.getResults();
-        for(final MapValue result : results){
-            final FieldValue json = result.get("reading");
-            final String jsonString = json.toJson(); // CAUTION!! "{}"
-            logger.fine("json: " + jsonString);
-            // json: "{\"rackId\":\"rack-03\",\"temperature\":95.0,\"timestamp\":\"2020-05-19T16:35:20+09:00\"}"
-            //rackList.add(RackInfo.fromJson(jsonString.substring(1, jsonString.length()-1).replaceAll("[\\\\][\\\"]", "\"")));
-            rackList.add(RackInfo.fromJson(jsonString.substring(1, jsonString.length()-1)
-                                            .replace("\\\"", "\"").replace("\\\'", "\'")));
-        }
+        do{
+            final QueryResult queryResult = handle.query(request);
+            final List<MapValue> results = queryResult.getResults();
+            for(final MapValue result : results){
+                final String reading = result.getString("reading"); // json string
+                System.out.println("Reading: " + reading);
+                rackList.add(RackInfo.fromJson(reading));
+            }
+        }while(!request.isDone());
+
         return rackList.toArray(new RackInfo[rackList.size()]);
     }
 
@@ -100,8 +99,11 @@ public class NosqlMonitorStore implements MonitorStore {
         final GetRequest request = new GetRequest()
             .setTableName(tableName).setKey(new MapValue().put("id", id));
         final GetResult result = handle.get(request);
-        final String json = result.getValue().getString("reading");
-        return RackInfo.fromJson(json);
+        final MapValue value = result.getValue();
+        Optional.ofNullable(value).orElseThrow(
+            () -> new RuntimeException("Failed to get - key: " + id));
+        final String reading = value.getString("reading");
+        return RackInfo.fromJson(reading);
     }
 
     @Override
@@ -113,13 +115,9 @@ public class NosqlMonitorStore implements MonitorStore {
             .setTableName(tableName)
             .setValue(new MapValue().put("id", id).put("reading", rackInfo.toJson()));
         final PutResult result = handle.put(request);
-        final MapValue existing = result.getExistingValue();
-        if(Optional.ofNullable(existing).isPresent()){
-            return RackInfo.fromJson(existing.getString("reading"));
-        }else{
-            return null;
-        }
+        Optional.ofNullable(result.getVersion()).orElseThrow(
+            () -> new RuntimeException("Failed to update: " + rackInfo.toString()));
+        return null; // not capable to return old data
     }
-
     
 }
