@@ -74,7 +74,9 @@ public class NosqlMonitorStore implements MonitorStore {
     @Override
     public void clear() {
         final QueryRequest request = new QueryRequest().setStatement(queryDelete);
-        handle.query(request);
+        do{
+            /*final QueryResult queryResult =*/ handle.query(request);
+        }while(!request.isDone());
     }
 
     @Override
