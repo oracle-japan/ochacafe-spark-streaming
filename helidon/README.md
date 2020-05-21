@@ -10,11 +10,13 @@
 
 ## ビルド
 
+- Oracle Coherence用のjar(coherence.jar), Oracle NoSQL Database Cloud用のjar(nosqldriver.jar)は、それぞれOracleのサイトから所定の手続きを経て入手し、pom.xml, .sh内のパスを正しく設定して下さい。
+- src/main/resources/example-application.yaml を application.yaml にリネームして必要な情報を設定して下さい。
+
 ```
 mvn clean package
 ```
 
-src/main/resources/example-application.yaml を application.yaml にリネームして必要な情報を設定して下さい。
 
 ## 起動
 
