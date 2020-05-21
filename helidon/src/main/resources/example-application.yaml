@@ -28,7 +28,7 @@ slack-alerter:
     topic: "TOPIC TO SUBSCRIBE"
     group-id: "GROUP_01"
 
-monitor-store: "map" # map or nosql
+monitor-store: "map" # map or nosql or redis or coherence
 
 nosql:
   compartment-id: "ocid1.compartment.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"

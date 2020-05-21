@@ -22,6 +22,7 @@ public class TempMonitor {
     private final MonitorStore store = MonitorStoreFactory.create();
 
     private TempMonitor() {
+        store.clear();
     }
 
     public void close(){

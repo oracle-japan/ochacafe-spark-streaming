@@ -2,6 +2,7 @@ package oracle.demo.tempmon;
 
 import java.util.Date;
 import java.util.Optional;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -15,7 +16,8 @@ import javax.json.bind.annotation.JsonbTransient;
 
 import org.jboss.weld.exceptions.IllegalArgumentException;
 
-public class RackInfo {
+@SuppressWarnings("serial")
+public class RackInfo implements Serializable{
 
     private static final JsonBuilderFactory JSON = Json.createBuilderFactory(Collections.emptyMap());
     private static final SimpleDateFormat iso8601format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");

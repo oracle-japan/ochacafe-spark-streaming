@@ -33,8 +33,9 @@
     <name>${project.artifactId}</name>
 
     <properties>
-        <!-- change the path for the nosql driver -->
+        <!-- change the path for the nosql & coherence jar -->
         <nosql.driver>/home/opc/work/nosql/sdk/lib/nosqldriver.jar</nosql.driver>
+        <coherence.jar>/home/opc/opt/wls1411/coherence/lib/coherence.jar</coherence.jar>
         <mainClass>oracle.demo.tempmon.Main</mainClass>
     </properties>
 
@@ -76,6 +77,22 @@
             <version>0.0</version>
             <scope>system</scope>
             <systemPath>${nosql.driver}</systemPath>
+        </dependency>
+
+        <!-- coherence -->
+        <dependency>
+            <groupId>oracle.coherence</groupId>
+            <artifactId>coherence</artifactId>
+            <version>14.1.1</version>
+            <scope>system</scope>
+            <systemPath>${coherence.jar}</systemPath>
+        </dependency>
+
+        <!-- Jedis client -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.3.0</version>
         </dependency>
 
     </dependencies>

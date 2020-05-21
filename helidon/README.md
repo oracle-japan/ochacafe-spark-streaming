@@ -1,15 +1,15 @@
 # Spark Streaming デモ - 外部とのインターフェス部分
 
 | モジュール | 機能 | Streamingから見ると |
-|-----------|------|--------------------|
-| TempReporter  | RESTで受信した温度データを管理し、OCI Streaming 経由で Spark Streaming に渡す        | Source |
+|-----------|------|:------------------:|
+| TempMonitor | Web UI のラックからデータを受信してストアに格納する、Web Serverが起動する         | - |
+| TempReporter  | ストアに格納されたデータを OCI Streaming 経由で Spark Streaming に渡す        | Source |
 | SlackAlerter | Spark Streaming から返されたデータをOCI Streaming 経由で受信＆処理してSlackにアラートを出す | Sink |
 
-Webサーバーが起動するのはTempReporterを有効にした場合のみ  
-
-TempReporter はAPIで受信したラック単位の温度をキャッシュし、一定間隔で、全ラックの温度情報をkafkaに送信する
+ストアは ローカル(java,util.Map), Oracle Coherence, Oracle NoSQL Database Cloud, Redis のいずれかを選択可能。
 
 ## ビルド
+
 ```
 mvn clean package
 ```
@@ -18,39 +18,32 @@ src/main/resources/example-application.yaml を application.yaml にリネーム
 
 ## 起動
 
-通常は、シェルを使って、TempReporter, SlackAlerter を別JVMで起動した方が標準出力が見やすい
+以下のシェルの組み合わせで起動できます。3つの機能が同じストアで起動するようにして下さい。
 
-```
-./start-reporter.sh
-```
+| シェル                                  | TempMonitor | TempReporter | SlackAlerter | 利用可能な store-type         |
+|----------------------------------------|:------------:|:------------:|:------------:|------------------------------|
+|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, redis      |
+|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, redis |
+|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, redis      |
+|start-alerter.sh                        |      x       |      x       |      o       | n/a                          |
+|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, redis |
 
-Web/RESTサーバーは TempReporter と一緒に立ち上がります。ポート 8080 でリクエストを受け付けます。  
-ブラウザからルートにアクセスするとシミュレーションのページが表示されます。
 
-```
-./start-alerter.sh
-```
+## API
 
-1 JVMで起動することももちろん可能
-```
-java -jar target/tempmon.jar
-```
-
-### API
-
-#### 温度情報をポストする
+### 温度情報をポストする
 
 ```
 curl http://localhost:8080/tempmon/ -X POST -H "Content-Type: application/json" -d '{"rackId":"rack-03","temperature":100}'
 ```
 
-#### OCI Streaming (Kafaka) への送信を中断する
+### OCI Streaming (Kafaka) への送信を中断する
 
 ```
 curl http://localhost:8080/tempmon/control?op=pause
 ```
 
-#### OCI Streaming (Kafaka) への送信を再開する
+### OCI Streaming (Kafaka) への送信を再開する
 
 
 ```
