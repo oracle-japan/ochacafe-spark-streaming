@@ -10,16 +10,20 @@
 
 helidon(Java)はmvn、spark(Scala)はsbtでビルドして下さい。
 
-## option-nosql-store ブランチ
+## option-multi-store-types ブランチ
 
-ラック・シミュレーターから送られてくる温度データの保存先に [Oracle NoSQL Database Cloud Service](https://docs.oracle.com/cd/E83857_01/paas/nosql-cloud/index.html) を使ってみました。Spark Streaming のデモのシナリオとは直接関係ありませんがNoSQL Database Cloudの実装例として参考になれば幸いです。
+ラック・シミュレーターから送られてくる温度データの保存するストアの実装を
+[Oracle Coherence](https://www.oracle.com/jp/middleware/coherence/)、 
+[Oracle NoSQL Database Cloud Service](https://docs.oracle.com/cd/E83857_01/paas/nosql-cloud/index.html)、
+[Redis](https://redis.io/)
+の3種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
 
 ## 変更履歴
 
 |Date      | 内容 |
 |----------|--------------------------------------|
 |2020.05.13| 初版 |
-|2020.05.19| option-nosql-store ブランチを追加 |
+|2020.05.19| option-multi-store-types ブランチを追加 |
 
 ---
 _Copyright © 2020, Oracle and/or its affiliates. All rights reserved._
