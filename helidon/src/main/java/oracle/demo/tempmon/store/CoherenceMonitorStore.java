@@ -1,7 +1,6 @@
 package oracle.demo.tempmon.store;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.tangosol.net.CacheFactory;
 import com.tangosol.net.NamedCache;
@@ -10,12 +9,7 @@ import oracle.demo.tempmon.RackInfo;
 
 public class CoherenceMonitorStore implements MonitorStore {
 
-    //private static final Logger logger = Logger.getLogger(MapMonitorStore.class.getName());
-   
     private final NamedCache<String, RackInfo> cache = CacheFactory.getCache("monitor-store");
-
-    public CoherenceMonitorStore(){
-    }
 
     @Override
     public void clear() {
@@ -24,9 +18,7 @@ public class CoherenceMonitorStore implements MonitorStore {
 
     @Override
     public RackInfo[] getAllRackInfo() {
-        final List<RackInfo> rackList = new ArrayList<>();
-        cache.values().forEach(e -> rackList.add(e));
-        return rackList.toArray(new RackInfo[rackList.size()]);
+        return new ArrayList<RackInfo>(cache.values()).toArray(new RackInfo[]{});
     }
 
     @Override
@@ -43,6 +35,5 @@ public class CoherenceMonitorStore implements MonitorStore {
     public void close() {
         cache.close();
     }
-  
 
 }
