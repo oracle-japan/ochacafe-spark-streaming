@@ -208,7 +208,7 @@ public class SlackAlerter {
             return;
         }
 
-        String emoji = status.equals("Warning") ? ":warning:" : ":information_source:";
+        String emoji = status.equals("Normal") ? ":information_source:" : ":warning:";
         String text = Json.createObjectBuilder()
         .add("text", "OCHaCafe Demo Alert !!")
         .add("blocks", 
