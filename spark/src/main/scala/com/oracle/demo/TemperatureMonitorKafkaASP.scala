@@ -24,7 +24,7 @@ object TemperatureMonitorKafkaASP {
   val temperatureThreshold: Double = config.get("config.threshold-temp").asDouble().orElse(100.0)
   val warningThreshold: Long = config.get("config.threshold-warning").asLong().orElse(30 * 1000L)
   val normalThreshold: Long = config.get("config.threshold-normal").asLong().orElse(30 * 1000L)
-  var timeout: String = config.get("config.timeout").asString().orElse("30 seconds")
+  var timeout: String = config.get("config.timeout").asString().orElse("20 seconds")
 
   /**
    * 受信データが一定時間（warningThreshold/normalThreshould）閾値(temperatureThreshould)を

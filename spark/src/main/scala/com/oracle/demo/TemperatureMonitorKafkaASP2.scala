@@ -6,7 +6,7 @@ import java.util.Date
 
 import io.helidon.config.Config
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.{DataStreamWriter, GroupState, OutputMode}
+import org.apache.spark.sql.streaming.{DataStreamWriter, GroupState, GroupStateTimeout, OutputMode}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.collection.mutable.ListBuffer
@@ -24,8 +24,10 @@ object TemperatureMonitorKafkaASP2 {
   val temperatureThreshold: Double = config.get("config.threshold-temp").asDouble().orElse(100.0)
   val warningThreshold: Long = config.get("config.threshold-warning").asLong().orElse(30 * 1000L)
   val normalThreshold: Long = config.get("config.threshold-normal").asLong().orElse(30 * 1000L)
-  var timeout: String = config.get("config.timeout").asString().orElse("30 seconds")
+  var timeout: String = config.get("config.timeout").asString().orElse("20 seconds")
+  var timeoutType: String = config.get("config.timeout-type").asString().orElse("processing")
   var outputMode: String = config.get("sw.output-mode").asString().orElse("update")
+  var watermarkDelayThreshold: String = config.get("config.threshold-watermark").asString().orElse("0 seconds")
 
   /**
    * 受信データが一定時間（warningThreshold/normalThreshould）閾値(temperatureThreshould)を
@@ -106,7 +108,12 @@ object TemperatureMonitorKafkaASP2 {
     inputs.toList.sortBy(_.timestamp.getTime).foreach( input => {
       rackState = updateRackState(rackState, input)
       oldState.update(rackState)
-      oldState.setTimeoutDuration(timeout)
+      if(timeoutType == "event"){
+        val eventType = input.timestamp.getTime
+        oldState.setTimeoutTimestamp(eventType, timeout)
+      }else{
+        oldState.setTimeoutDuration(timeout)
+      }
     })
     if(rackState.status != rackState.prevStatus) output += rackState
     output.iterator
@@ -116,9 +123,14 @@ object TemperatureMonitorKafkaASP2 {
 
     parseArgs(args)
     println("** Example of flatMapGroupsWithState **")
+    println(s"Output mode: $outputMode")
+    println(s"Watermark delay: $watermarkDelayThreshold")
+    println(s"Timeout type: $timeoutType")
     println(s"Timeout: $timeout")
 
-    val om: OutputMode = if(outputMode == "append") OutputMode.Append else OutputMode.Update
+    val om = if(outputMode == "append") OutputMode.Append else OutputMode.Update
+    val tot = if(timeoutType == "event") GroupStateTimeout.EventTimeTimeout else GroupStateTimeout.ProcessingTimeTimeout
+
     println(s"Output mode: $om")
 
     val spark = SparkSession
@@ -140,7 +152,8 @@ object TemperatureMonitorKafkaASP2 {
       .select(from_json($"value", monitorDataSchema).as("rackInfo"))
       .select($"rackInfo.rackId".as("rackId"), $"rackInfo.temperature".as("temperature"), $"rackInfo.timestamp".as("timestamp"))
       .as[RackInfo]
-      .groupByKey(_.rackId).flatMapGroupsWithState[RackState, RackState](om, GroupStateTimeout.ProcessingTimeTimeout)(updateAcrossAllRackStatus)
+      .withWatermark("timestamp", watermarkDelayThreshold) // necessary when eventtime timeout
+      .groupByKey(_.rackId).flatMapGroupsWithState[RackState, RackState](om, tot)(updateAcrossAllRackStatus)
       .select(lit("ASP").as("key"), to_json(struct($"rackId", $"status", $"ts", $"temperature")).as("value"))
 
     val sq = publish(df).start()
@@ -225,9 +238,17 @@ object TemperatureMonitorKafkaASP2 {
               i = i + 1
               outputMode = args(i)
           }
+          if(args(i) == "--watermark"){
+              i = i + 1
+              watermarkDelayThreshold = args(i) + " seconds"
+          }
           if(args(i) == "--timeout"){
               i = i + 1
               timeout = args(i) + " seconds"
+          }
+          if(args(i) == "--timeout-type"){
+              i = i + 1
+              timeoutType = args(i)
           }
           i = i + 1
       }
