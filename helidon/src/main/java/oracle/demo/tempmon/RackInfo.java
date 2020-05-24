@@ -21,14 +21,14 @@ public class RackInfo {
 
     public RackInfo(){} // DO NOT DELETE !!
 
-    public RackInfo(String rackId, double temparature) {
-        this(rackId, temparature, new Date());
+    public RackInfo(String rackId, double temperature) {
+        this(rackId, temperature, new Date());
     }
 
-    public RackInfo(String rackId, double temparature, Date timestamp) {
+    public RackInfo(String rackId, double temperature, Date timestamp) {
         if(!Optional.ofNullable(rackId).isPresent()) throw new IllegalArgumentException("rackId must not be null.");
         this.rackId = rackId;
-        this.temperature = temparature;
+        this.temperature = temperature;
         this.timestamp = timestamp;
     }
 
