@@ -31,6 +31,11 @@ public class TempMonitorResource {
     }
 
     @GET
+    @Path("/nop")
+    public void nop() {
+    }
+
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/")
     public RackInfo[] getAllRackInfo() {

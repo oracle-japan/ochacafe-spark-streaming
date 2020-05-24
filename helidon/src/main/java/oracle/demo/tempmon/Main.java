@@ -5,6 +5,10 @@ import java.io.InputStream;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Response;
+
 import io.helidon.config.Config;
 import io.helidon.microprofile.server.Server;
 
@@ -54,6 +58,16 @@ public final class Main {
             // start the server
             final Server server = startServer();
             logger.info(String.format("Server started - host=%s, port=%d", server.host(), server.port()));
+            try{
+                final Client client = ClientBuilder.newClient();
+                final String path = "http://" + server.host() + ":" + server.port() + "/tempmon/nop";
+                Response response = client.target(path).request().get();
+                if(response.getStatus() / 100 != 2){
+                    throw new Exception(response.getStatusInfo().getReasonPhrase());
+                }
+            }catch(Exception e){
+                logger.severe("Webserver test failed: " + e.getMessage());
+            }
         }else{
             logger.warning("Simulator is disabled.");
         }

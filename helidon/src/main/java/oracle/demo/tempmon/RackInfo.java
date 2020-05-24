@@ -17,7 +17,7 @@ import javax.json.bind.annotation.JsonbTransient;
 import org.jboss.weld.exceptions.IllegalArgumentException;
 
 @SuppressWarnings("serial")
-public class RackInfo implements Serializable{
+public class RackInfo{
 
     private static final JsonBuilderFactory JSON = Json.createBuilderFactory(Collections.emptyMap());
     private static final SimpleDateFormat iso8601format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
@@ -28,14 +28,14 @@ public class RackInfo implements Serializable{
 
     public RackInfo(){} // DO NOT DELETE !!
 
-    public RackInfo(String rackId, double temparature) {
-        this(rackId, temparature, new Date());
+    public RackInfo(String rackId, double temperature) {
+        this(rackId, temperature, new Date());
     }
 
-    public RackInfo(String rackId, double temparature, Date timestamp) {
+    public RackInfo(String rackId, double temperature, Date timestamp) {
         if(!Optional.ofNullable(rackId).isPresent()) throw new IllegalArgumentException("rackId must not be null.");
         this.rackId = rackId;
-        this.temperature = temparature;
+        this.temperature = temperature;
         this.timestamp = timestamp;
     }
 
