@@ -5,7 +5,7 @@ version := "0.1"
 //scalaVersion := "2.12.8"
 scalaVersion := "2.11.11"
 
-val sparkVersion = "2.4.4"
+val sparkVersion = "2.4.5"
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion % "provided"
 
