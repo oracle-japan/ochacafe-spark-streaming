@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -30,34 +31,35 @@ public class TempMonitorResource {
     public TempMonitorResource(){
     }
 
-    @GET
-    @Path("/nop")
+    @GET @Path("/nop")
     public void nop() {
     }
 
-    @GET
+    @GET @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/")
     public RackInfo[] getAllRackInfo() {
         return monitor.getAllRackInfo();
     }
 
-    @Path("/{id}")
-    @GET
+    @GET @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public RackInfo getRackInfo(@PathParam("id") String rackId) {
         return monitor.getRackInfo(rackId);
     }
 
-    @Path("/")
-    @POST
+    @PUT @Path("/{id}/{temperature}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public void postRackInfobyGet(@PathParam("id") String rackId, @PathParam("temperature") double temperature) {
+        monitor.updateRackInfo(new RackInfo(rackId, temperature));
+    }
+    
+    @POST @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public void postRackInfo(RackInfo rackInfo) {
         monitor.updateRackInfo(rackInfo);
     }
 
-    @Path("/control")
-    @GET
+    @GET @Path("/control")
     @Produces(MediaType.APPLICATION_JSON)
     public void controlPublisher(@QueryParam("op") String operation) {
         if(operation.equalsIgnoreCase("resume")){
