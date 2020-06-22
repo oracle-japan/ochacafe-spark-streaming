@@ -37,4 +37,11 @@ nosql:
     read: 1
     write: 1
     storage: 1
-      
+
+dynamodb:
+  islocal: false
+  endpoint: http://localhost:8000 # when local
+  regions: "ap-northeast-1"
+  capacity:
+    read: 1
+    write: 1    

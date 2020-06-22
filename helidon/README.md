@@ -6,7 +6,7 @@
 | TempReporter  | ストアに格納されたデータを OCI Streaming 経由で Spark Streaming に渡す        | Source |
 | SlackAlerter | Spark Streaming から返されたデータをOCI Streaming 経由で受信＆処理してSlackにアラートを出す | Sink |
 
-ストアは ローカル(java,util.Map), Oracle Coherence, Oracle NoSQL Database Cloud, Redis のいずれかを選択可能。
+ストアは ローカル(java,util.Map), Oracle Coherence, Oracle NoSQL Database Cloud, Redis, DynamoDB のいずれかを選択可能。
 
 ## ビルド
 
@@ -22,13 +22,13 @@ mvn clean package
 
 以下のシェルの組み合わせで起動できます。3つの機能が同じストアで起動するようにして下さい。
 
-| シェル                                  | TempMonitor | TempReporter | SlackAlerter | 利用可能な store-type         |
-|----------------------------------------|:------------:|:------------:|:------------:|------------------------------|
-|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, redis      |
-|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, redis |
-|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, redis      |
-|start-alerter.sh                        |      x       |      x       |      o       | n/a                          |
-|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, redis |
+| シェル                                  | TempMonitor | TempReporter | SlackAlerter | 利用可能な store-type                   |
+|----------------------------------------|:------------:|:------------:|:------------:|----------------------------------------|
+|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, redis, dynamodb      |
+|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, redis, dynamodb |
+|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, redis, dynamodb      |
+|start-alerter.sh                        |      x       |      x       |      o       | n/a                                    |
+|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, redis, dynamodb |
 
 
 ## API

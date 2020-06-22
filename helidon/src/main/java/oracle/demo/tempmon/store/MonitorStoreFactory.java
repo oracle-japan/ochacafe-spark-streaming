@@ -37,6 +37,8 @@ public class MonitorStoreFactory extends AbstractMonitorStoreFactory {
                 return new RedisMonitorStore();
             }else if(type.equalsIgnoreCase("coherence")) {
                 return new CoherenceMonitorStore();
+            }else if(type.equalsIgnoreCase("dynamodb")) {
+                return new DynamoDBStore();
             }else{
                 logger.warning(String.format("Bad store type: '%s' - continue with MapMonitorStore", type));
                 return new MapMonitorStore();
