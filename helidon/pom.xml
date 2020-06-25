@@ -35,7 +35,6 @@
     <properties>
         <!-- change the path for the nosql & coherence jar -->
         <nosql.driver>/home/opc/work/nosql/sdk/lib/nosqldriver.jar</nosql.driver>
-        <coherence.jar>/home/opc/opt/wls1411/coherence/lib/coherence.jar</coherence.jar>
         <mainClass>oracle.demo.tempmon.Main</mainClass>
     </properties>
 
@@ -70,7 +69,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- nosql db cloud driver -->
+        <!-- Oracle NoSql Database Cloud driver -->
         <dependency>
             <groupId>oracle.nosql</groupId>
             <artifactId>nosqldriver</artifactId>
@@ -79,13 +78,11 @@
             <systemPath>${nosql.driver}</systemPath>
         </dependency>
 
-        <!-- coherence -->
+        <!-- Oracle Coherence CE -->
         <dependency>
-            <groupId>oracle.coherence</groupId>
+            <groupId>com.oracle.coherence.ce</groupId>
             <artifactId>coherence</artifactId>
-            <version>14.1.1</version>
-            <scope>system</scope>
-            <systemPath>${coherence.jar}</systemPath>
+            <version>20.06</version>
         </dependency>
 
         <!-- Jedis client -->
