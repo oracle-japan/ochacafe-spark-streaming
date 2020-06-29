@@ -6,19 +6,19 @@
 
    <cluster-config>
       <member-identity>
-         <cluster-name system-property="tangosol.coherence.cluster">LocalCluster</cluster-name>
+         <cluster-name>TempMonCluster</cluster-name>
       </member-identity>
       <unicast-listener>
         <well-known-addresses>
           <socket-address id="1">
             <address>localhost</address>
-            <port>9090</port>
+            <port>7574</port>
           </socket-address>
         </well-known-addresses>
 
         <!-- address></address -->
-        <port>9090</port>
-        <port-auto-adjust>true</port-auto-adjust>
+        <!-- port>9090</port -->
+        <!-- port-auto-adjust>true</port-auto-adjust -->
 
       </unicast-listener>
       <multicast-listener>
@@ -28,4 +28,3 @@
    </cluster-config>
 
 </coherence>
-
