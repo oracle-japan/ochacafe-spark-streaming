@@ -13,10 +13,10 @@ helidon(Java)はmvn、spark(Scala)はsbtでビルドして下さい。
 ## option-multi-store-types ブランチ
 
 ラック・シミュレーターから送られてくる温度データの保存するストアの実装を
-[Oracle Coherence](https://www.oracle.com/jp/middleware/coherence/)、 
+[Oracle Coherence Community Edition](https://github.com/oracle/coherence)、 
 [Oracle NoSQL Database Cloud Service](https://docs.oracle.com/cd/E83857_01/paas/nosql-cloud/index.html)、
-[Redis](https://redis.io/)
-の3種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
+[Redis](https://redis.io/)、DymanoDB、MongoDB 
+の5種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
 
 ## 変更履歴
 
