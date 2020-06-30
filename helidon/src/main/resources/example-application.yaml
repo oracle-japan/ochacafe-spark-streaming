@@ -44,4 +44,9 @@ dynamodb:
   regions: "ap-northeast-1"
   capacity:
     read: 1
-    write: 1    
+    write: 1
+
+mongo:
+  url: "mongodb://localhost:27017"
+  database: tempmon
+  collection: temps

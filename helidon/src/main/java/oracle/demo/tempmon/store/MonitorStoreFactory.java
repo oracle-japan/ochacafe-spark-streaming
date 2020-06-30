@@ -39,6 +39,8 @@ public class MonitorStoreFactory extends AbstractMonitorStoreFactory {
                 return new CoherenceMonitorStore();
             }else if(type.equalsIgnoreCase("dynamodb")) {
                 return new DynamoDBStore();
+            }else if(type.equalsIgnoreCase("mongodb")) {
+                return new MongoDBStore();
             }else{
                 logger.warning(String.format("Bad store type: '%s' - continue with MapMonitorStore", type));
                 return new MapMonitorStore();

@@ -6,7 +6,7 @@
 | TempReporter  | ストアに格納されたデータを OCI Streaming 経由で Spark Streaming に渡す        | Source |
 | SlackAlerter | Spark Streaming から返されたデータをOCI Streaming 経由で受信＆処理してSlackにアラートを出す | Sink |
 
-ストアは ローカル(java,util.Map), Oracle Coherence, Oracle NoSQL Database Cloud, Redis, DynamoDB のいずれかを選択可能。
+ストアは ローカル(java,util.Map), Oracle Coherence, Oracle NoSQL Database Cloud, Redis, DynamoDB, MongoDB のいずれかを選択可能。
 
 ## ビルド
 
@@ -24,11 +24,11 @@ mvn clean package
 
 | シェル                                  | TempMonitor | TempReporter | SlackAlerter | 利用可能な store-type                   |
 |----------------------------------------|:------------:|:------------:|:------------:|----------------------------------------|
-|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, redis, dynamodb      |
-|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, redis, dynamodb |
-|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, redis, dynamodb      |
+|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, redis, dynamodb, mongodb      |
+|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, redis, dynamodb, mongodb |
+|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, redis, dynamodb, mongodb      |
 |start-alerter.sh                        |      x       |      x       |      o       | n/a                                    |
-|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, redis, dynamodb |
+|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, redis, dynamodb, mongodb |
 
 
 ## API
