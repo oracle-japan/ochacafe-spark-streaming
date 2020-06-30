@@ -15,7 +15,9 @@ helidon(Java)はmvn、spark(Scala)はsbtでビルドして下さい。
 ラック・シミュレーターから送られてくる温度データの保存するストアの実装を
 [Oracle Coherence Community Edition](https://github.com/oracle/coherence)、 
 [Oracle NoSQL Database Cloud Service](https://docs.oracle.com/cd/E83857_01/paas/nosql-cloud/index.html)、
-[Redis](https://redis.io/)、DymanoDB、MongoDB 
+[Redis](https://redis.io/)、
+[DynamoDB](https://aws.amazon.com/jp/dynamodb/)、
+[MongoDB](https://www.mongodb.com/)
 の5種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
 
 ## 変更履歴
