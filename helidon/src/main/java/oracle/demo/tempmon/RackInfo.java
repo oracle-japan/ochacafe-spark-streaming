@@ -2,10 +2,11 @@ package oracle.demo.tempmon;
 
 import java.util.Date;
 import java.util.Optional;
-import java.io.Serializable;
 import java.io.StringReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 
 import javax.json.Json;
@@ -16,11 +17,9 @@ import javax.json.bind.annotation.JsonbTransient;
 
 import org.jboss.weld.exceptions.IllegalArgumentException;
 
-@SuppressWarnings("serial")
 public class RackInfo{
 
     private static final JsonBuilderFactory JSON = Json.createBuilderFactory(Collections.emptyMap());
-    private static final SimpleDateFormat iso8601format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     private String rackId;
     private double temperature;
@@ -62,7 +61,11 @@ public class RackInfo{
 
     @JsonbTransient
     public String getTimestampStr(){
-        return iso8601format.format(timestamp);
+        return timestamp.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .truncatedTo(ChronoUnit.SECONDS)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        //return timestamp.toInstant().atZone(ZoneId.systemDefault()).truncatedTo(ChronoUnit.MILLIS).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     public void setTimestamp(Date timestamp){
@@ -74,14 +77,14 @@ public class RackInfo{
     }
 
     public String toString() {
-        return String.format("[rackId=%s, temperature=%s, timestamp=%s]", rackId, Double.toString(temperature), iso8601format.format(timestamp));
+        return String.format("[rackId=%s, temperature=%s, timestamp=%s]", rackId, Double.toString(temperature), getTimestampStr());
     }
 
     public String toJson() {
         return JSON.createObjectBuilder()
             .add("rackId", rackId)
             .add("temperature", temperature)
-            .add("timestamp", iso8601format.format(timestamp))
+            .add("timestamp", getTimestampStr())
             .build()
             .toString();
     }
@@ -90,16 +93,11 @@ public class RackInfo{
         //System.out.println("json: " + json);
         JsonReader jsonReader = Json.createReader(new StringReader(json));
         JsonObject jobj = jsonReader.readObject();
-        String timestamp = jobj.getString("timestamp");
-        try{
-            return new RackInfo(
+        return new RackInfo(
                 jobj.getString("rackId"),
                 jobj.getJsonNumber("temperature").doubleValue(),
-                iso8601format.parse(timestamp)
+                Date.from(ZonedDateTime.parse(jobj.getString("timestamp")).toInstant())
             );
-        }catch(ParseException e){
-            throw new RuntimeException("Couldn't parse timestamp: " + timestamp);
-        }
     }
 
 

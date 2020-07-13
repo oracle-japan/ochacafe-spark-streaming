@@ -5,6 +5,7 @@
 .settings
 .classpath
 .metals
+.factorypath
 *.iml
 
 local-repo

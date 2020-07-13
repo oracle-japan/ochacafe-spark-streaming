@@ -104,6 +104,13 @@
             <version>4.0.4</version>
         </dependency>
 
+        <!-- Cassandra -->
+        <dependency>
+            <groupId>com.datastax.oss</groupId>
+            <artifactId>java-driver-core</artifactId>
+            <version>4.7.2</version>
+        </dependency>
+
 
     </dependencies>
 
