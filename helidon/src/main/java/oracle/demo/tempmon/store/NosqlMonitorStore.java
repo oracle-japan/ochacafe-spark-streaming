@@ -29,8 +29,7 @@ public class NosqlMonitorStore implements MonitorStore {
 
     private static final Logger logger = Logger.getLogger(NosqlMonitorStore.class.getName());
 
-    private final NoSQLHandleConfig config;
-    private final NoSQLHandle handle;
+    private final NoSQLHandle handle; // NoSQLHandle is thread-safe
 
     private final String tableName = "temperature";
     private final String ddl = "create table if not exists temperature(id string, reading json, primary key(id))";
@@ -48,7 +47,7 @@ public class NosqlMonitorStore implements MonitorStore {
         final int writeUnits = tableLimits.get("write").asInt().orElse(1);
         final int storageGB = tableLimits.get("storage").asInt().orElse(1);
 
-        config = new NoSQLHandleConfig(region, new SignatureProvider())
+        final NoSQLHandleConfig config = new NoSQLHandleConfig(region, new SignatureProvider())
             .setDefaultCompartment(compartmentId)
             .setConsistency(Consistency.EVENTUAL);
         handle = NoSQLHandleFactory.createNoSQLHandle(config);

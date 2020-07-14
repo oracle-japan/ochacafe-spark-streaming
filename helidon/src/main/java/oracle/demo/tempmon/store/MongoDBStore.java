@@ -21,7 +21,7 @@ import oracle.demo.tempmon.RackInfo;
 public class MongoDBStore implements MonitorStore {
 
     private final MongoClient client;
-    private final MongoDatabase database;
+    private final MongoDatabase database; // MongoDatabase is thread-safe
     private final MongoCollection<Document> collection;
 
     public MongoDBStore(){

@@ -30,8 +30,8 @@ import oracle.demo.tempmon.RackInfo;
 
 public class DynamoDBStore implements MonitorStore {
 
-    private final AmazonDynamoDB client;
-    private final DynamoDBMapper mapper; // DynamoDBMapper is thread safe
+    private final AmazonDynamoDB client; // AmazonDynamoDB is thread-safe
+    private final DynamoDBMapper mapper; // DynamoDBMapper is thread-safe
     private String tableName = "RackInfo";
 
     public DynamoDBStore(){
@@ -42,6 +42,7 @@ public class DynamoDBStore implements MonitorStore {
         final long readCapacity = appConfig.get("capacity.read").asLong().orElse(1L);
         final long writeCapacity = appConfig.get("capacity.write").asLong().orElse(1L);
 
+        // AmazonDynamoDBClientBuilder is NOT thread-safe
         final AmazonDynamoDBClientBuilder builder = AmazonDynamoDBClientBuilder.standard();
         if(isLocal){
             builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, regions));
