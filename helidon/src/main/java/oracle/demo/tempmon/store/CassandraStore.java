@@ -19,8 +19,12 @@ public class CassandraStore implements MonitorStore {
     private static final String StmtSelectAll = "SELECT * FROM tempmon.monitor_store";
     private static final String StmtSelect = "SELECT * FROM tempmon.monitor_store where id = '%s'";
     private static final String StmtDelete = "DELETE FROM tempmon.monitor_store where id = '%s'";
+    private static final String StmtTruncate = "TRUNCATE TABLE tempmon.monitor_store";
 
-    private final CqlSession session;
+    private static final String StmtDropTable = "DROP TABLE tempmon.monitor_store";
+    private static final String StmtDropKeyspace = "DROP KEYSPACE tempmon";
+
+    private final CqlSession session; // CqlSession is thread-safe !!
 
     public CassandraStore() {
         session = CqlSession.builder().build();
@@ -30,10 +34,10 @@ public class CassandraStore implements MonitorStore {
 
     @Override
     public void clear() {
-        ResultSet rs = session.execute(StmtSelectAll);
-        rs.forEach(row -> {
-            session.execute(String.format(StmtDelete, row.getString("id")));
-        });
+        session.execute(StmtTruncate);
+        // or if you like...
+        //session.execute(StmtDropTable);
+        //session.execute(StmtDropKeyspace);
     }
 
     @Override
@@ -54,9 +58,7 @@ public class CassandraStore implements MonitorStore {
 
     @Override
     public RackInfo updateRackInfo(String id, RackInfo rackInfo) {
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-            rackInfo.setTimestamp(new Date());
-        }
+        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()) rackInfo.setTimestamp(new Date());
         // this is actually an upsert operation
         session.execute(String.format(StmtUpdate, rackInfo.getTemperature(), rackInfo.getTimestampStr(), id));
         return null;
