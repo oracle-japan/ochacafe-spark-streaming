@@ -27,6 +27,7 @@ public class CassandraStore implements MonitorStore {
     private final CqlSession session; // CqlSession is thread-safe !!
 
     public CassandraStore() {
+        // you can update config by application.conf located in the root of classpath 
         session = CqlSession.builder().build();
         session.execute(StmtCreateKeyspace);
         session.execute(StmtCreateTable);
