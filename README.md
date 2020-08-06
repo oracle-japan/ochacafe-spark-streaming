@@ -19,7 +19,7 @@ helidon(Java)はmvn、spark(Scala)はsbtでビルドして下さい。
 [DynamoDB](https://aws.amazon.com/jp/dynamodb/)、
 [MongoDB](https://www.mongodb.com/)、
 [Cassandra](https://cassandra.apache.org/)
-の5種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
+の6種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
 
 ## 変更履歴
 
