@@ -2,19 +2,13 @@ package oracle.demo.tempmon;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -27,18 +21,16 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 import io.helidon.config.Config;
+import io.helidon.messaging.connectors.kafka.KafkaMessage;
 
 @ApplicationScoped
 public class SlackAlerter {
 
     private static final Logger logger = Logger.getLogger(SlackAlerter.class.getName());
+    private final boolean slackAlerterEnabled = Config.create().get("slack-alerter.enabled").asBoolean().orElse(true);
 
     private static final SimpleDateFormat iso8601format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     private static final SimpleDateFormat myformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX");
@@ -46,8 +38,6 @@ public class SlackAlerter {
     private static SlackAlerter alerter;
 
     private final Config config = Config.create().get("slack-alerter");
-    private final AtomicBoolean fToGo = new AtomicBoolean(true);
-    private final ExecutorService es;
     private final String webHookUrl;
 
     public static synchronized SlackAlerter getInstance() {
@@ -56,92 +46,33 @@ public class SlackAlerter {
 
     private SlackAlerter() {
         webHookUrl = config.get("webhook-url").asString().get();
-        es = Executors.newSingleThreadExecutor();
-        es.submit(() -> {
-            final KafkaConsumer<String, String> consumer = createKafkaConsumer();
-            final String topic = config.get("kafka.topic").asString().get();
-
-            logger.info("Start polling...");
-            consumer.subscribe(Arrays.asList(topic));
-            while (fToGo.get()) {
-                try {
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1l));
-                    for (ConsumerRecord<String, String> record : records) {
-                        print(record);
-                        sendToSlack(record);
-                    }
-                    consumer.commitSync();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            stop();
-        }));
     }
 
-    private void print(ConsumerRecord<String, String> record){
+    @Incoming("from-kafka")
+    public void consumeKafka(KafkaMessage<String, String> message) {
+        print(message);
+        try{
+            if(slackAlerterEnabled) sendToSlack(message);
+        }catch(Exception e){
+            logger.log(Level.WARNING, "Couldn't send a message to Slack: " + e.getMessage(), e);
+        }
+    }
+
+    private void print(KafkaMessage<String, String> message){
         //logger.info(String.format("%s: %s/%s", record.offset(), record.key(), record.value()));
-        String json = JsonUtil.gerPrettyPrint(record.value());
+        String json = JsonUtil.gerPrettyPrint(message.getPayload());
         System.out.println("****************************************");
-        System.out.println(String.format("[Received] %s(%d)%s", record.key(), record.offset(), json));
+        System.out.println(String.format("[Received] %s(%d)%s", message.getKey(), message.getOffset().get(), json));
         System.out.println("----------------------------------------");
     }
-
-    private void stop(){
-        fToGo.set(false);
-        System.err.println("\nWaiting for SlackAlerter to be terminated...");
-        try {
-            es.shutdown();
-            es.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {}
-        System.err.println("SlackAlerter stopped.");
-    }
-
-    private KafkaConsumer<String, String> createKafkaConsumer(){
-        final String streamingServer;
-        final String tenantName;
-        final String userName;
-        final String poolId;
-        final String authToken;
-        final String groupId;
-        final Config kafkaConfig = config.get("kafka");
-
-        streamingServer = kafkaConfig.get("streaming-server").asString().get();
-        tenantName = kafkaConfig.get("tenant-name").asString().get();
-        userName = kafkaConfig.get("user-name").asString().get();
-        poolId = kafkaConfig.get("pool-id").asString().get();
-        authToken = kafkaConfig.get("auth-token").asString().get();
-        groupId = kafkaConfig.get("group-id").asString().get();
-
-        final String saslJaasConfig = "org.apache.kafka.common.security.plain.PlainLoginModule "
-        + "required username=\"" + tenantName + "/" + userName + "/" + poolId + "\" password=\"" + authToken
-        + "\";";
-
-        Properties prop = new Properties();
-        prop.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
-        prop.put("sasl.mechanism", "PLAIN");
-        prop.put("sasl.jaas.config", saslJaasConfig);
-        prop.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, streamingServer);
-        prop.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-        prop.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-        prop.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        prop.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        prop.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 1024 * 1024);
-
-        return new KafkaConsumer<String, String>(prop);        
-    }
-
 
     //private String savedStateSW = null;
     //private long savedLastTime = 0;
     private final Map<String, RackStateSW> savedStates = new HashMap<>();
-    private void sendToSlack(ConsumerRecord<String, String> record) throws ParseException {
+    private void sendToSlack(KafkaMessage<String, String> message) throws ParseException {
 
-        String key = record.key();
-        String value = record.value();
+        String key = message.getKey().get();
+        String value = message.getPayload();
 
         // items for slack alerts
         String rackId = null;

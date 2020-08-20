@@ -27,6 +27,7 @@ helidon(Java)はmvn、spark(Scala)はsbtでビルドして下さい。
 |----------|-------------------------------------------------------|
 |2020.05.13| 初版 |
 |2020.05.19| option-multi-store-types ブランチを追加                 |
+|2020.08.18| Helidon を2.0にバージョンアップ、Kafka Connectorを使用   |
 
 ---
 _Copyright © 2020, Oracle and/or its affiliates. All rights reserved._

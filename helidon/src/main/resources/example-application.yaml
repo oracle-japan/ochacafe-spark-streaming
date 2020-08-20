@@ -1,29 +1,32 @@
-kafka:
-  tenant-name: "YOUR TENANT NAME"
-  pool-id: "YOUR STREAMING POOL ID"
-  streaming-server: "YOUR STREAMING SERVER URL"
-  user-name: "YOUR USER NAME"
-  auth-token: "YOUR AUTH TOKEN"
-
 temp-reporter:
   enabled: true
   polling-interval: 5000
-  kafka:
-    tenant-name: "${ALIAS=kafka.tenant-name}"
-    pool-id: "${ALIAS=kafka.pool-id}"
-    streaming-server: "${ALIAS=kafka.streaming-server}"
-    user-name: "${ALIAS=kafka.user-name}"
-    auth-token: "${ALIAS=kafka.auth-token}"
-    topic: "TOPIC TO PUBLISH"
 
 slack-alerter:
   enabled: true
   webhook-url: "SLACK WEBHOOK URL"
-  kafka:
-    tenant-name: "${ALIAS=kafka.tenant-name}"
-    pool-id: "${ALIAS=kafka.pool-id}"
-    streaming-server: "${ALIAS=kafka.streaming-server}"
-    user-name: "${ALIAS=kafka.user-name}"
-    auth-token: "${ALIAS=kafka.auth-token}"
-    topic: "TOPIC TO SUBSCRIBE"
-    group-id: "GROUP_01"
+
+
+mp.messaging:
+
+  incoming.from-kafka:
+    connector: helidon-kafka
+    topic: "STREAM_IN"
+    auto.offset.reset: latest
+    enable.auto.commit: true
+    group.id: "GROUP_ID"
+
+  outgoing.to-kafka:
+    connector: helidon-kafka
+    topic: "STREAM_OUT"
+
+  connector:
+    helidon-kafka:
+      bootstrap.servers: "SERVER URL"
+      sasl.mechanism: PLAIN
+      security.protocol: SASL_SSL
+      sasl.jaas.config: "SASL CONFIG"
+      key.serializer: org.apache.kafka.common.serialization.StringSerializer
+      value.serializer: org.apache.kafka.common.serialization.StringSerializer
+      key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value.deserializer: org.apache.kafka.common.serialization.StringDeserializer

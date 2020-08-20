@@ -14,7 +14,7 @@ import io.helidon.microprofile.server.Server;
 public final class Main {
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
-    
+
     /**
      * Cannot be instantiated.
      */
@@ -38,19 +38,15 @@ public final class Main {
 
         // start kafka publisher
         if(tempReporterEnabled){
-            TempReporter.getInstance();
-
             // start the server
             final Server server = startServer();
             logger.info(String.format("Server started - host=%s, port=%d", server.host(), server.port()));
-
         }else{
             logger.warning("TempReporter is disabled.");
         }
 
         // start slack connector
         if(slackAlerterEnabled){
-            SlackAlerter.getInstance();
         }else{
             logger.warning("SlackAlerter is disabled.");
         }

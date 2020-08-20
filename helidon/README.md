@@ -10,6 +10,9 @@ Webサーバーが起動するのはTempReporterを有効にした場合のみ
 TempReporter はAPIで受信したラック単位の温度をキャッシュし、一定間隔で、全ラックの温度情報をkafkaに送信する
 
 ## ビルド
+
+Helidon 2.0 を前提にしていますので、Java 11 が必要です。
+
 ```
 mvn clean package
 ```
