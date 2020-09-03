@@ -1,5 +1,8 @@
 .vscode
 application.yaml
+build300.sbt
+start300.sh
+startx.sh
 
 
 
