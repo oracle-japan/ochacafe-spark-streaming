@@ -1,76 +1,82 @@
 package oracle.demo.tempmon;
 
-import java.util.Optional;
-import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Flow;
+import java.util.concurrent.SubmissionPublisher;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.eclipse.microprofile.reactive.streams.operators.ReactiveStreams;
+import org.reactivestreams.FlowAdapters;
+import org.reactivestreams.Publisher;
 
+import io.helidon.common.configurable.ScheduledThreadPoolSupplier;
 import io.helidon.config.Config;
+import io.helidon.messaging.connectors.kafka.KafkaMessage;
 
 @ApplicationScoped
 public class TempReporter {
 
     private static final Logger logger = Logger.getLogger(TempReporter.class.getName());
 
-    private static TempReporter reporter;
+    private final Config config = Config.create().get("temp-reporter");
+    private final boolean tempReporterEnabled = config.get("enabled").asBoolean().orElse(true);
 
-    public static synchronized TempReporter getInstance() {
-        return Optional.ofNullable(reporter).orElse(new TempReporter());
+    private final ScheduledExecutorService ses = ScheduledThreadPoolSupplier.builder().threadNamePrefix("helidon-scheduler-").build().get();
+
+    private final SubmissionPublisher<KafkaMessage<String, String>> publisher = new SubmissionPublisher<>();
+
+    // Kafka Connector
+    // based on MicroProfile Reactive Streams Messaging
+    @Outgoing("to-kafka")
+    public Publisher<KafkaMessage<String, String>> preparePublisher() {
+        return ReactiveStreams
+                .fromPublisher(FlowAdapters.toPublisher(publisher))
+                .buildRs();
     }
 
-    private final Config config = Config.create().get("temp-reporter");
-    private final AtomicBoolean fToGo = new AtomicBoolean(true);
-    private final ExecutorService es;
+    private void submit(RackInfo rackInfo) {
+        logger.fine(String.format("Sending message: %s", rackInfo.toString()));
+        logger.fine("Estimated maximum lag: " + publisher.estimateMaximumLag());
 
-    private TempReporter() {
+        final long estimateMinimumDemand = publisher.estimateMinimumDemand();
+        logger.fine("Estimated minimum demand: " + estimateMinimumDemand);
+        if(estimateMinimumDemand <= 0){
+            logger.warning(String.format("You are sending a message while estimateMinimumDemand is %d which is <= 0.", estimateMinimumDemand));
+        }
 
-        es = Executors.newSingleThreadExecutor();
-        es.submit(() -> {
-            final TempMonitor monitor = TempMonitor.getInstance();
-            final KafkaProducer<String, String> producer = createKafkaProducer(); 
-            final String topic = config.get("kafka.topic").asString().get();
-            final long pollingInterval = config.get("polling-interval").asLong().orElse(5000L);
+        publisher.submit(KafkaMessage.of(rackInfo.getRackId(), rackInfo.toJson(), () -> {
+            logger.fine(String.format("Ack received: %s", rackInfo.toString()));
+            print(rackInfo);
+            return CompletableFuture.completedFuture(null);
+        }));
+    }
 
-            logger.info("Start polling");
-            while(fToGo.get()){
-                if(!monitor.isPending()){
-                    try{
-                        logger.fine("Polling monitor...");
-    
-                        for(RackInfo rackInfo : monitor.getAllRackInfo()){
-                            rackInfo.updateTimestamp();
-                            logger.fine("Rack: " + rackInfo.toJson());
-                            final ProducerRecord<String, String> record = 
-                                new ProducerRecord<String, String>(topic, rackInfo.getRackId(), rackInfo.toJson());
-                            producer.send(record, (m,e) -> {
-                                if(Optional.ofNullable(e).isPresent()){
-                                    logger.severe(String.format("Failed to publish %s - %s", rackInfo.toJson(), e.getMessage()));
-                                }else{
-                                    print(m, rackInfo);
-                                }
-                            });
-                        }
-                    }catch(Exception e){
-                        e.printStackTrace();
-                    }
+    public TempReporter() {
+        if(!tempReporterEnabled) return;
+
+        final TempMonitor monitor = TempMonitor.getInstance();
+        final long pollingInterval = config.get("polling-interval").asLong().orElse(5000L);
+        logger.fine("Max buffer capacity of publisher: " + publisher.getMaxBufferCapacity());
+
+        logger.info("Start polling");
+        ses.scheduleAtFixedRate(() -> {
+            if(!monitor.isPending()){
+                logger.fine("Polling monitor...");
+                for(RackInfo rackInfo : monitor.getAllRackInfo()){
+                    rackInfo.updateTimestamp();
+                    logger.info("Rack: " + rackInfo.toJson());
+                    submit(rackInfo);
                 }
-                try{
-                    Thread.sleep(pollingInterval);
-                }catch(InterruptedException ie){}
             }
-            monitor.close();
-        });
+        }, pollingInterval, pollingInterval, TimeUnit.MILLISECONDS);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             stop();
@@ -78,57 +84,48 @@ public class TempReporter {
 
     }
 
-    private void print(RecordMetadata m, RackInfo rackInfo){
-        //logger.info(String.format("Message sent, partition: %d - %s", m.partition(), rackInfo.toJson()));
+    private void stop(){
+        System.err.println("\nWaiting for KafkaPublisher to be terminated...");
+        try {
+            ses.shutdown();
+            ses.awaitTermination(10, TimeUnit.SECONDS);
+            publisher.close();
+        } catch (InterruptedException e) {}
+        System.err.println("KafkaPublisher stopped.");
+    }
+
+    private void print(RackInfo rackInfo){
         System.out.println("****************************************");
-        System.out.println(String.format("[Sent] Offset: %d", m.offset()));
         System.out.println(String.format("Rack: %s", rackInfo.getRackId()));
         System.out.println(String.format("Temerature: %.1f", rackInfo.getTemperature()));
         System.out.println(String.format("Timestamp: %s", rackInfo.getTimestampStr()));
         System.out.println("----------------------------------------");
     }
 
+    // for debugging purpose - not called in reality
+    private void offer(RackInfo rackInfo) {
+        logger.fine(String.format("Sending message: %s", rackInfo.toString()));
+        logger.fine("Estimated maximum lag: " + publisher.estimateMaximumLag());
+        logger.fine("Estimated miinimum demand: " + publisher.estimateMinimumDemand());
 
-    private void stop(){
-        fToGo.set(false);
-        System.err.println("\nWaiting for TempReporter to be terminated...");
-        try {
-            es.shutdown();
-            es.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {}
-        System.err.println("TempReporter stopped.");
+        final int lag = publisher.offer(
+            KafkaMessage.of(rackInfo.getRackId(), rackInfo.toJson(),() -> {
+                logger.fine(String.format("Ack received: %s", rackInfo.toString()));
+                print(rackInfo);
+                return CompletableFuture.completedFuture(null);
+            }),
+            10, TimeUnit.SECONDS, 
+            (subscriber, message) -> {
+                logger.warning(String.format("publish offer on drop: %s", message.getPayload()));
+                subscriber.onError(new RuntimeException("drop item:[" + message.getPayload() + "]"));
+                return false; // no retry
+            });
+        if (lag < 0) {
+            logger.warning(String.format("drops: %d", lag * -1));
+        } else {
+            logger.fine(String.format("lag: %d", lag));
+        }
     }
-
-    private KafkaProducer<String, String> createKafkaProducer(){
-        final String streamingServer;
-        final String tenantName;
-        final String userName;
-        final String poolId;
-        final String authToken;
-        final Config kafkaConfig = config.get("kafka");
-
-        streamingServer = kafkaConfig.get("streaming-server").asString().get();
-        tenantName = kafkaConfig.get("tenant-name").asString().get();
-        userName = kafkaConfig.get("user-name").asString().get();
-        poolId = kafkaConfig.get("pool-id").asString().get();
-        authToken = kafkaConfig.get("auth-token").asString().get();
-
-        final String saslJaasConfig = 
-            "org.apache.kafka.common.security.plain.PlainLoginModule " +
-            "required username=\"" + tenantName + "/" + userName + "/" + poolId + "\" password=\"" + authToken + "\";";
-    
-        final Properties prop = new Properties();
-        prop.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
-        prop.put("sasl.mechanism", "PLAIN");
-        prop.put("sasl.jaas.config", saslJaasConfig);
-        prop.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, streamingServer);
-        prop.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        prop.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        prop.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, 1024 * 1024); // limit request size to 1MB
-        prop.put(ProducerConfig.RETRIES_CONFIG, 5); // retries on transient errors and load balancing disconnection
-    
-        return new KafkaProducer<String, String>(prop);
-    }    
 
 }
 

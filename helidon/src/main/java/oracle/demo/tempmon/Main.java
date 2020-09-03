@@ -5,10 +5,6 @@ import java.io.InputStream;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
-
 import io.helidon.config.Config;
 import io.helidon.microprofile.server.Server;
 
@@ -18,7 +14,7 @@ import io.helidon.microprofile.server.Server;
 public final class Main {
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
-    
+
     /**
      * Cannot be instantiated.
      */
@@ -35,43 +31,23 @@ public final class Main {
 
         final Config config = Config.create();
 
-        final boolean simulatorEnabled = config.get("simulator.enabled").asBoolean().orElse(true);
         final boolean tempReporterEnabled = config.get("temp-reporter.enabled").asBoolean().orElse(true);
         final boolean slackAlerterEnabled = config.get("slack-alerter.enabled").asBoolean().orElse(true);
 
-        // start temp reporter
+        // start temperature reporter
         if(tempReporterEnabled){
-            TempReporter.getInstance();
+            // start the server
+            final Server server = startServer();
+            logger.info(String.format("Server started - host=%s, port=%d", server.host(), server.port()));
         }else{
             logger.warning("TempReporter is disabled.");
         }
 
-        // start slack connector
+        // start slack alerter
         if(slackAlerterEnabled){
-            SlackAlerter.getInstance();
         }else{
             logger.warning("SlackAlerter is disabled.");
         }
-
-        // simulator
-        if(simulatorEnabled){
-            // start the server
-            final Server server = startServer();
-            logger.info(String.format("Server started - host=%s, port=%d", server.host(), server.port()));
-            try{
-                final Client client = ClientBuilder.newClient();
-                final String path = "http://" + server.host() + ":" + server.port() + "/tempmon/nop";
-                Response response = client.target(path).request().get();
-                if(response.getStatus() / 100 != 2){
-                    throw new Exception(response.getStatusInfo().getReasonPhrase());
-                }
-            }catch(Exception e){
-                logger.severe("Webserver test failed: " + e.getMessage());
-            }
-        }else{
-            logger.warning("Simulator is disabled.");
-        }
-
 
     }
 

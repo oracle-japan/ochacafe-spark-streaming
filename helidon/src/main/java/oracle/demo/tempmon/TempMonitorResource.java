@@ -12,9 +12,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-// import org.eclipse.microprofile.config.inject.ConfigProperty;
-// import javax.inject.Inject;
-
 import org.jboss.weld.exceptions.IllegalArgumentException;
 
 @Path("/tempmon")
@@ -24,9 +21,6 @@ public class TempMonitorResource {
     private static final Logger logger = Logger.getLogger(TempMonitorResource.class.getName());
 
     private TempMonitor monitor = TempMonitor.getInstance();
-
-    //@Inject @ConfigProperty(name = "tempmon.pollingInterval", defaultValue = "5000")
-    //private Long pollingInterval;
 
     public TempMonitorResource(){
     }
