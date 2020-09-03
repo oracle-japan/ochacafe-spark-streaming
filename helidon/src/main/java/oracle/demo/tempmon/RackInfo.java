@@ -13,10 +13,11 @@ import javax.json.Json;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.bind.annotation.JsonbTransient;
 
 import org.jboss.weld.exceptions.IllegalArgumentException;
 
-public class RackInfo {
+public class RackInfo{
 
     private static final JsonBuilderFactory JSON = Json.createBuilderFactory(Collections.emptyMap());
 
@@ -26,14 +27,14 @@ public class RackInfo {
 
     public RackInfo(){} // DO NOT DELETE !!
 
-    public RackInfo(String rackId, double temparature) {
-        this(rackId, temparature, new Date());
+    public RackInfo(String rackId, double temperature) {
+        this(rackId, temperature, new Date());
     }
 
-    public RackInfo(String rackId, double temparature, Date timestamp) {
+    public RackInfo(String rackId, double temperature, Date timestamp) {
         if(!Optional.ofNullable(rackId).isPresent()) throw new IllegalArgumentException("rackId must not be null.");
         this.rackId = rackId;
-        this.temperature = temparature;
+        this.temperature = temperature;
         this.timestamp = timestamp;
     }
 
@@ -58,6 +59,7 @@ public class RackInfo {
         return timestamp;
     }
 
+    @JsonbTransient
     public String getTimestampStr(){
         return timestamp.toInstant()
                 .atZone(ZoneId.systemDefault())

@@ -10,24 +10,14 @@
 
 helidon(Java)はmvn、spark(Scala)はsbtでビルドして下さい。
 
-## option-multi-store-types ブランチ
-
-ラック・シミュレーターから送られてくる温度データの保存するストアの実装を
-[Oracle Coherence Community Edition](https://github.com/oracle/coherence)、 
-[Oracle NoSQL Database Cloud Service](https://docs.oracle.com/cd/E83857_01/paas/nosql-cloud/index.html)、
-[Redis](https://redis.io/)、
-[DynamoDB](https://aws.amazon.com/jp/dynamodb/)、
-[MongoDB](https://www.mongodb.com/)、
-[Cassandra](https://cassandra.apache.org/)
-の6種類で実装してみました。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。
-
 ## 変更履歴
 
 |Date      | 内容 |
 |----------|-------------------------------------------------------|
 |2020.05.13| 初版 |
 |2020.05.19| option-multi-store-types ブランチを追加                 |
-|2020.08.18| Helidon を2.0にバージョンアップ、Kafka Connectorを使用   |
+|2020.08.18| Helidon を2.0.1にバージョンアップ、Kafka Connectorを使用 |
+|2020.09.03| option-multi-store-types ブランチをmainにマージ         |
 
 ---
 _Copyright © 2020, Oracle and/or its affiliates. All rights reserved._

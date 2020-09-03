@@ -22,9 +22,6 @@ public class TempMonitorResource {
 
     private TempMonitor monitor = TempMonitor.getInstance();
 
-    //@Inject @ConfigProperty(name = "tempmon.pollingInterval", defaultValue = "5000")
-    //private Long pollingInterval;
-
     public TempMonitorResource(){
     }
 

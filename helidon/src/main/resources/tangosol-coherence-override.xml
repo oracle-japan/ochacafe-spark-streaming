@@ -1,0 +1,30 @@
+<?xml version='1.0'?>
+
+<coherence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns="http://xmlns.oracle.com/coherence/coherence-operational-config"
+   xsi:schemaLocation="http://xmlns.oracle.com/coherence/coherence-operational-config coherence-operational-config.xsd">
+
+   <cluster-config>
+      <member-identity>
+         <cluster-name>TempMonCluster</cluster-name>
+      </member-identity>
+      <unicast-listener>
+        <well-known-addresses>
+          <socket-address id="1">
+            <address>localhost</address>
+            <port>7574</port>
+          </socket-address>
+        </well-known-addresses>
+
+        <!-- address></address -->
+        <!-- port>9090</port -->
+        <!-- port-auto-adjust>true</port-auto-adjust -->
+
+      </unicast-listener>
+      <multicast-listener>
+        <time-to-live>0</time-to-live>
+        <join-timeout-milliseconds>1000</join-timeout-milliseconds>
+      </multicast-listener>
+   </cluster-config>
+
+</coherence>

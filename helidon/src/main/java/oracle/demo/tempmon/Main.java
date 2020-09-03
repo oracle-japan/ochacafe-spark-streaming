@@ -30,13 +30,11 @@ public final class Main {
         setupLogging();
 
         final Config config = Config.create();
-        final Config tempReporterConfig = config.get("temp-reporter");
-        final Config slackAlerterConfig = config.get("slack-alerter");
 
-        final boolean tempReporterEnabled = tempReporterConfig.get("enabled").asBoolean().orElse(true);
-        final boolean slackAlerterEnabled = slackAlerterConfig.get("enabled").asBoolean().orElse(true);
+        final boolean tempReporterEnabled = config.get("temp-reporter.enabled").asBoolean().orElse(true);
+        final boolean slackAlerterEnabled = config.get("slack-alerter.enabled").asBoolean().orElse(true);
 
-        // start kafka publisher
+        // start temperature reporter
         if(tempReporterEnabled){
             // start the server
             final Server server = startServer();
@@ -45,7 +43,7 @@ public final class Main {
             logger.warning("TempReporter is disabled.");
         }
 
-        // start slack connector
+        // start slack alerter
         if(slackAlerterEnabled){
         }else{
             logger.warning("SlackAlerter is disabled.");

@@ -30,27 +30,28 @@ import io.helidon.messaging.connectors.kafka.KafkaMessage;
 public class SlackAlerter {
 
     private static final Logger logger = Logger.getLogger(SlackAlerter.class.getName());
-    private final boolean slackAlerterEnabled = Config.create().get("slack-alerter.enabled").asBoolean().orElse(true);
 
     private static final SimpleDateFormat iso8601format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     private static final SimpleDateFormat myformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX");
 
-    private static SlackAlerter alerter;
-
-    private final Config config = Config.create().get("slack-alerter");
+    private final Config config;
+    private final boolean slackAlerterEnabled;
     private final String webHookUrl;
 
-    public static synchronized SlackAlerter getInstance() {
-        return Optional.ofNullable(alerter).orElse(new SlackAlerter());
-    }
-
     private SlackAlerter() {
+        config = Config.create().get("slack-alerter");
+        slackAlerterEnabled = config.get("enabled").asBoolean().orElse(true);
         webHookUrl = config.get("webhook-url").asString().get();
     }
 
+    // Kafka Connector
+    // based on MicroProfile Reactive Streams Messaging
     @Incoming("from-kafka")
     public void consumeKafka(KafkaMessage<String, String> message) {
-        print(message);
+        String json = JsonUtil.gerPrettyPrint(message.getPayload());
+        System.out.println("****************************************");
+        System.out.println(String.format("[Received] %s(%d)%s", message.getKey(), message.getOffset().get(), json));
+        System.out.println("----------------------------------------");
         try{
             if(slackAlerterEnabled) sendToSlack(message);
         }catch(Exception e){
@@ -58,17 +59,9 @@ public class SlackAlerter {
         }
     }
 
-    private void print(KafkaMessage<String, String> message){
-        //logger.info(String.format("%s: %s/%s", record.offset(), record.key(), record.value()));
-        String json = JsonUtil.gerPrettyPrint(message.getPayload());
-        System.out.println("****************************************");
-        System.out.println(String.format("[Received] %s(%d)%s", message.getKey(), message.getOffset().get(), json));
-        System.out.println("----------------------------------------");
-    }
 
-    //private String savedStateSW = null;
-    //private long savedLastTime = 0;
     private final Map<String, RackStateSW> savedStates = new HashMap<>();
+
     private void sendToSlack(KafkaMessage<String, String> message) throws ParseException {
 
         String key = message.getKey().get();

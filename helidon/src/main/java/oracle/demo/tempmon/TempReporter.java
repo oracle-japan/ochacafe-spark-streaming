@@ -26,16 +26,15 @@ public class TempReporter {
 
     private static final Logger logger = Logger.getLogger(TempReporter.class.getName());
 
-    private final boolean tempReporterEnabled = Config.create().get("temp-reporter.enabled").asBoolean().orElse(true);
     private final Config config = Config.create().get("temp-reporter");
+    private final boolean tempReporterEnabled = config.get("enabled").asBoolean().orElse(true);
 
-    //private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
     private final ScheduledExecutorService ses = ScheduledThreadPoolSupplier.builder().threadNamePrefix("helidon-scheduler-").build().get();
 
-    //private final SubmissionPublisher<KafkaMessage<String, String>> publisher 
-    //    = new SubmissionPublisher<>(ForkJoinPool.commonPool(), Flow.defaultBufferSize());
     private final SubmissionPublisher<KafkaMessage<String, String>> publisher = new SubmissionPublisher<>();
 
+    // Kafka Connector
+    // based on MicroProfile Reactive Streams Messaging
     @Outgoing("to-kafka")
     public Publisher<KafkaMessage<String, String>> preparePublisher() {
         return ReactiveStreams
@@ -103,7 +102,7 @@ public class TempReporter {
         System.out.println("----------------------------------------");
     }
 
-    // for debugging use
+    // for debugging purpose - not called in reality
     private void offer(RackInfo rackInfo) {
         logger.fine(String.format("Sending message: %s", rackInfo.toString()));
         logger.fine("Estimated maximum lag: " + publisher.estimateMaximumLag());

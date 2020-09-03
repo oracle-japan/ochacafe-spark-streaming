@@ -8,6 +8,7 @@
 .factorypath
 *.iml
 
+local-repo
 project
 target
 model

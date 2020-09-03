@@ -17,20 +17,22 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.helidon.applications</groupId>
         <artifactId>helidon-mp</artifactId>
         <version>2.0.1</version>
-        <relativePath/>
+        <relativePath />
     </parent>
     <groupId>oracle.demo</groupId>
     <artifactId>tempmon</artifactId>
     <name>${project.artifactId}</name>
 
     <properties>
+        <!-- change the path for the nosql & coherence jar -->
+        <nosql.driver>/home/opc/work/nosql/sdk/lib/nosqldriver.jar</nosql.driver>
         <mainClass>oracle.demo.tempmon.Main</mainClass>
     </properties>
 
@@ -67,6 +69,52 @@
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Oracle NoSql Database Cloud driver -->
+        <dependency>
+            <groupId>oracle.nosql</groupId>
+            <artifactId>nosqldriver</artifactId>
+            <version>0.0</version>
+            <scope>system</scope>
+            <systemPath>${nosql.driver}</systemPath>
+        </dependency>
+
+        <!-- Oracle Coherence CE -->
+        <dependency>
+            <groupId>com.oracle.coherence.ce</groupId>
+            <artifactId>coherence</artifactId>
+            <version>20.06</version>
+        </dependency>
+
+        <!-- Jedis client -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
+        <!-- DynamoDB -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-dynamodb</artifactId>
+            <version>1.11.804</version>
+        </dependency>
+
+        <!-- Mongo -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.0.4</version>
+        </dependency>
+
+        <!-- Cassandra -->
+        <dependency>
+            <groupId>com.datastax.oss</groupId>
+            <artifactId>java-driver-core</artifactId>
+            <version>4.7.2</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
@@ -91,4 +139,14 @@
             </plugin>
         </plugins>
     </build>
+
+    <!--
+    <repositories>
+        <repository>
+            <id>local-repo</id>
+            <url>file://${basedir}/local-repo</url>
+        </repository>
+    </repositories>
+    -->
+
 </project>
