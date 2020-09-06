@@ -18,6 +18,7 @@ import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
 import io.helidon.common.configurable.ScheduledThreadPoolSupplier;
+import io.helidon.common.configurable.ThreadPoolSupplier;
 import io.helidon.config.Config;
 import io.helidon.messaging.connectors.kafka.KafkaMessage;
 
@@ -29,9 +30,12 @@ public class TempReporter {
     private final Config config = Config.create().get("temp-reporter");
     private final boolean tempReporterEnabled = config.get("enabled").asBoolean().orElse(true);
 
-    private final ScheduledExecutorService ses = ScheduledThreadPoolSupplier.builder().threadNamePrefix("helidon-scheduler-").build().get();
+    private final ScheduledExecutorService ses = ScheduledThreadPoolSupplier.builder().threadNamePrefix("reporter-scheduler-").build().get();
 
-    private final SubmissionPublisher<KafkaMessage<String, String>> publisher = new SubmissionPublisher<>();
+    private final SubmissionPublisher<KafkaMessage<String, String>> publisher = new SubmissionPublisher<>(
+        ThreadPoolSupplier.builder().threadNamePrefix("reporter-messaging-").build().get(),
+        Flow.defaultBufferSize()
+    );
 
     // Kafka Connector
     // based on MicroProfile Reactive Streams Messaging
