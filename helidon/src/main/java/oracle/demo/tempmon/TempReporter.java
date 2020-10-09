@@ -53,7 +53,7 @@ public class TempReporter {
         final long estimateMinimumDemand = publisher.estimateMinimumDemand();
         logger.fine("Estimated minimum demand: " + estimateMinimumDemand);
         if(estimateMinimumDemand <= 0){
-            logger.warning(String.format("You are sending a message while estimateMinimumDemand is %d which is <= 0.", estimateMinimumDemand));
+            logger.fine(String.format("You are sending a message while estimateMinimumDemand is %d which is <= 0.", estimateMinimumDemand));
         }
 
         publisher.submit(KafkaMessage.of(rackInfo.getRackId(), rackInfo.toJson(), () -> {

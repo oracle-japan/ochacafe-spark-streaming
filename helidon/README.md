@@ -13,6 +13,7 @@
 ラック・シミュレーターから送られてくる温度データの保存するストアの実装を
 [Oracle Coherence Community Edition](https://github.com/oracle/coherence)、 
 [Oracle NoSQL Database Cloud Service](https://docs.oracle.com/cd/E83857_01/paas/nosql-cloud/index.html)、
+[MySQL X DevAPI](https://dev.mysql.com/doc/x-devapi-userguide/en/)、
 [Redis](https://redis.io/)、
 [DynamoDB](https://aws.amazon.com/jp/dynamodb/)、
 [MongoDB](https://www.mongodb.com/)、
@@ -40,11 +41,11 @@ application.yaml にKafakaの接続情報を設定します。OCI Streamingを�
 
 | シェル                                  | TempMonitor | TempReporter | SlackAlerter | 利用可能な store-type                   |
 |----------------------------------------|:------------:|:------------:|:------------:|----------------------------------------|
-|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, redis, dynamodb, mongodb, cassandra      |
-|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, redis, dynamodb, mongodb, cassandra |
-|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, redis, dynamodb, mongodb, cassandra      |
+|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra      |
+|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra |
+|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra      |
 |start-alerter.sh                        |      x       |      x       |      o       | n/a                                    |
-|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, redis, dynamodb, mongodb, cassandra |
+|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra |
 
 
 ## API
