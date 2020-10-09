@@ -114,6 +114,12 @@
             <version>4.7.2</version>
         </dependency>
 
+        <!-- MySQL database driver -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.20</version>
+        </dependency>        
 
     </dependencies>
 

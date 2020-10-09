@@ -43,6 +43,8 @@ public class MonitorStoreFactory extends AbstractMonitorStoreFactory {
                 return new MongoDBStore();
             }else if(type.equalsIgnoreCase("cassandra")) {
                 return new CassandraStore();
+            }else if(type.equalsIgnoreCase("mysqlx")) {
+                return new MySQLXStore();
             }else{
                 logger.warning(String.format("Bad store type: '%s' - continue with MapMonitorStore", type));
                 return new MapMonitorStore();
