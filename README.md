@@ -1,6 +1,4 @@
-<a href="https://github.com/oracle-japan/ochacafe-spark-streaming/tags">
-    <img src="https://img.shields.io/github/v/tag/oracle-japan/ochacafe-spark-streaming" alt="latest version">
-</a>
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/oracle-japan/ochacafe-spark-streaming)
 
 # OCHaCafe Season 2 #6 「Cloud Native × Streaming はじめの一歩」
 
