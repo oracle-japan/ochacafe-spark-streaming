@@ -11,7 +11,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 
 import oracle.demo.tempmon.RackInfo;
 
-public class CassandraStore implements MonitorStore {
+public class CassandraMonitorStore implements MonitorStore {
 
     private static final String StmtCreateKeyspace = "CREATE KEYSPACE IF NOT EXISTS tempmon WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1}";
     private static final String StmtCreateTable = "CREATE TABLE IF NOT EXISTS tempmon.monitor_store (id varchar PRIMARY KEY, temperature double, ts timestamp)";
@@ -26,7 +26,7 @@ public class CassandraStore implements MonitorStore {
 
     private final CqlSession session; // CqlSession is thread-safe !!
 
-    public CassandraStore() {
+    public CassandraMonitorStore() {
         // you can update config by application.conf located in the root of classpath 
         session = CqlSession.builder().build();
         session.execute(StmtCreateKeyspace);
@@ -59,9 +59,10 @@ public class CassandraStore implements MonitorStore {
 
     @Override
     public RackInfo updateRackInfo(String id, RackInfo rackInfo) {
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()) rackInfo.setTimestamp(new Date());
+        final RackInfo info = Optional.ofNullable(rackInfo.getTimestamp()).isPresent() 
+            ? rackInfo : new RackInfo(id, rackInfo.getTemperature(), new Date());
         // this is actually an upsert operation
-        session.execute(String.format(StmtUpdate, rackInfo.getTemperature(), rackInfo.getTimestampStr(), id));
+        session.execute(String.format(StmtUpdate, info.getTemperature(), info.getTimestampStr(), id));
         return null;
     }
 

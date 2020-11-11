@@ -50,10 +50,9 @@ public class RedisMonitorStore implements MonitorStore {
     @Override
     public RackInfo updateRackInfo(String id, RackInfo rackInfo) {
         try(Jedis jedis = jedisPool.getResource()){
-            if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-                rackInfo.setTimestamp(new Date());
-            }
-            String ret = jedis.set(rackInfo.getRackId(), rackInfo.toJson());
+            final RackInfo info = Optional.ofNullable(rackInfo.getTimestamp()).isPresent() 
+                ? rackInfo : new RackInfo(id, rackInfo.getTemperature(), new Date());
+            String ret = jedis.set(id, info.toJson());
             if(!ret.equals("OK")){
                 throw new RuntimeException("Couldn't update - " + ret);
             }

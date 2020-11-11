@@ -53,3 +53,12 @@ mongo:
   url: "mongodb://localhost:27017"
   database: tempmon
   collection: temps
+
+mysqlx:
+  url: "mysqlx://localhost:33060/demo?user=oracle&password=password"
+
+hbase:
+  server: localhost
+  port: 2181
+
+  

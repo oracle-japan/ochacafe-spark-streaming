@@ -38,13 +38,15 @@ public class MonitorStoreFactory extends AbstractMonitorStoreFactory {
             }else if(type.equalsIgnoreCase("coherence")) {
                 return new CoherenceMonitorStore();
             }else if(type.equalsIgnoreCase("dynamodb")) {
-                return new DynamoDBStore();
+                return new DynamoDBMonitorStore();
             }else if(type.equalsIgnoreCase("mongodb")) {
-                return new MongoDBStore();
+                return new MongoDBMonitorStore();
             }else if(type.equalsIgnoreCase("cassandra")) {
-                return new CassandraStore();
+                return new CassandraMonitorStore();
             }else if(type.equalsIgnoreCase("mysqlx")) {
-                return new MySQLXStore();
+                return new MySQLXMonitorStore();
+            }else if(type.equalsIgnoreCase("hbase")) {
+                return new HBaseMonitorStore();
             }else{
                 logger.warning(String.format("Bad store type: '%s' - continue with MapMonitorStore", type));
                 return new MapMonitorStore();

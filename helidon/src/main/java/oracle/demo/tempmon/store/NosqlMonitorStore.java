@@ -109,15 +109,14 @@ public class NosqlMonitorStore implements MonitorStore {
 
     @Override
     public RackInfo updateRackInfo(final String id, final RackInfo rackInfo) {
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-            rackInfo.setTimestamp(new Date());
-        }
+        final RackInfo info = Optional.ofNullable(rackInfo.getTimestamp()).isPresent() 
+            ? rackInfo : new RackInfo(id, rackInfo.getTemperature(), new Date());
         final PutRequest request = new PutRequest()
             .setTableName(tableName)
-            .setValue(new MapValue().put("id", id).put("reading", rackInfo.toJson()));
+            .setValue(new MapValue().put("id", id).put("reading", info.toJson()));
         final PutResult result = handle.put(request);
         Optional.ofNullable(result.getVersion()).orElseThrow(
-            () -> new RuntimeException("Failed to update: " + rackInfo.toString()));
+            () -> new RuntimeException("Failed to update: " + info.toString()));
         return null; // not capable to return old data
     }
     

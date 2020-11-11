@@ -11,16 +11,17 @@ import com.mysql.cj.xdevapi.DocResult;
 import com.mysql.cj.xdevapi.Schema;
 import com.mysql.cj.xdevapi.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
+import com.tangosol.dev.compiler.Info;
 
 import oracle.demo.tempmon.RackInfo;
 
-public class MySQLXStore implements MonitorStore {
+public class MySQLXMonitorStore implements MonitorStore {
 
     private final Session session;
     private final Schema schema;
     private final Collection collection;
 
-    public MySQLXStore(){
+    public MySQLXMonitorStore(){
         final io.helidon.config.Config appConfig = io.helidon.config.Config.create().get("mysqlx");
         final String url = appConfig.get("url").asString().orElse("mysqlx://127.0.0.1:33060/demo?user=oracle&password=mysql");
         final String database = appConfig.get("database").asString().orElse("demo");
@@ -52,10 +53,9 @@ public class MySQLXStore implements MonitorStore {
 
     @Override
     public RackInfo updateRackInfo(String id, RackInfo rackInfo) {
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-            rackInfo.setTimestamp(new Date());
-        }
-        collection.addOrReplaceOne(id, rackInfo.toJson());
+        final RackInfo info = Optional.ofNullable(rackInfo.getTimestamp()).isPresent() 
+            ? rackInfo : new RackInfo(id, rackInfo.getTemperature(), new Date());
+        collection.addOrReplaceOne(id, info.toJson());
         return null;
     }
 

@@ -18,13 +18,13 @@ import org.bson.Document;
 
 import oracle.demo.tempmon.RackInfo;
 
-public class MongoDBStore implements MonitorStore {
+public class MongoDBMonitorStore implements MonitorStore {
 
     private final MongoClient client;
     private final MongoDatabase database; // MongoDatabase is thread-safe
     private final MongoCollection<Document> collection;
 
-    public MongoDBStore(){
+    public MongoDBMonitorStore(){
         final io.helidon.config.Config appConfig = io.helidon.config.Config.create().get("mongo");
         final String url = appConfig.get("url").asString().orElse("mongodb://localhost:27017");
         final String dbName = appConfig.get("database").asString().orElse("tempmon");
@@ -64,13 +64,12 @@ public class MongoDBStore implements MonitorStore {
 
     @Override
     public RackInfo updateRackInfo(String id, RackInfo rackInfo) {
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-            rackInfo.setTimestamp(new Date());
-        }
+        final RackInfo info = Optional.ofNullable(rackInfo.getTimestamp()).isPresent() 
+            ? rackInfo : new RackInfo(id, rackInfo.getTemperature(), new Date());
         Document doc = 
-            new Document("rackId", rackInfo.getRackId())
-            .append("temperature", rackInfo.getTemperature())
-            .append("timestamp", rackInfo.getTimestampStr());
+            new Document("rackId", info.getRackId())
+            .append("temperature", info.getTemperature())
+            .append("timestamp", info.getTimestampStr());
 
         UpdateOptions option = new UpdateOptions().upsert(true);
         collection.updateOne(Filters.eq("rackId", id), new Document("$set", doc), option);            

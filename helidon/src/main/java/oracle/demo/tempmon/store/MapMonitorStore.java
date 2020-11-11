@@ -33,10 +33,9 @@ public class MapMonitorStore implements MonitorStore {
 
     @Override
     public RackInfo updateRackInfo(String id, RackInfo rackInfo) {
-        if(!Optional.ofNullable(rackInfo.getTimestamp()).isPresent()){
-            rackInfo.setTimestamp(new Date());
-        }
-        return racks.put(rackInfo.getRackId(), rackInfo);
+        final RackInfo info = Optional.ofNullable(rackInfo.getTimestamp()).isPresent() 
+            ? rackInfo : new RackInfo(id, rackInfo.getTemperature(), new Date());
+        return racks.put(id, info);
     }
 
     private RackInfo copy(RackInfo rackInfo) {
