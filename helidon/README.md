@@ -17,13 +17,14 @@
 [Redis](https://redis.io/)、
 [DynamoDB](https://aws.amazon.com/jp/dynamodb/)、
 [MongoDB](https://www.mongodb.com/)、
-[Cassandra](https://cassandra.apache.org/)
-の6種類で実装し、起動オプションで切り替えることができます。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。 
+[Cassandra](https://cassandra.apache.org/)、
+[HBase](https://hbase.apache.org/)
+の8種類で実装し、起動オプションで切り替えることができます。Spark Streaming のデモのシナリオとは直接関係ありませんが、複数プロセスから参照・更新可能なキャッシュの実装例として参考になれば幸いです。 
 
 
 ## ビルド
 
-Helidon 2.0 を前提にしていますので、Java 11 が必要です。
+Helidon 2.0系 を前提にしていますので、Java 11 が必要です。
 - Oracle NoSQL Database Cloud用のjar(nosqldriver.jar)は、Oracleのサイトから所定の手続きを経て入手し、pom.xml, .sh内のパスを正しく設定して下さい。
 - src/main/resources/example-application.yaml を application.yaml にリネームして必要な情報を設定して下さい。
 
@@ -41,11 +42,11 @@ application.yaml にKafakaの接続情報を設定します。OCI Streamingを�
 
 | シェル                                  | TempMonitor | TempReporter | SlackAlerter | 利用可能な store-type                   |
 |----------------------------------------|:------------:|:------------:|:------------:|----------------------------------------|
-|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra      |
-|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra |
-|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra      |
+|start-monitor.sh \<store-type\>         |      o       |      x       |      x       | coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra, hbase      |
+|start-monitor-reporter.sh \<store-type\>|      o       |      o       |      x       | map, coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra, hbase |
+|start-reporter.sh \<store-type\>        |      x       |      o       |      x       | coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra, hbase      |
 |start-alerter.sh                        |      x       |      x       |      o       | n/a                                    |
-|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra |
+|start-all.sh \<store-type\>             |      o       |      o       |      o       | map, coherence, nosql, mysqlx, redis, dynamodb, mongodb, cassandra, hbase |
 
 
 ## API
