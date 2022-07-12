@@ -1,4 +1,5 @@
 .vscode
+.metals
 application.yaml
 build300.sbt
 start300.sh
