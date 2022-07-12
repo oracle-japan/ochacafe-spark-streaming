@@ -104,7 +104,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-            <version>4.0.4</version>
+            <version>4.0.6</version>
         </dependency>
 
         <!-- Cassandra -->
@@ -118,7 +118,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.20</version>
+            <version>8.0.28</version>
         </dependency>
 
         <!-- HBase client -->
